@@ -20,6 +20,8 @@ SASICA - Copyright (C) 2014  Maximilien Chaumon
 
 AMICA 1.5 (c) Jason Palmer, University of California San Diego, 2015.
 
+eBridge - EB.Info.Version = '1.0.01' - Copyright © 2013-2014 by Daniel Alschuler
+
 # EEG pre-processing protocol
 1.) Reading the data (EEG data and the Behavioral data).
 
