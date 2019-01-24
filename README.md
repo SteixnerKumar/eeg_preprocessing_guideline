@@ -6,7 +6,7 @@
 # tiger_eeg_preprocessing
 The general idea of why this code was created.
 The EEG pre-processing code for the tiger task. It consists of the Hyper-scanning EEG data that needs to be preprocessed.
-[TOP](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#Contents)
+##[Back to Contents](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#Contents)
 
 # The default versions used for this codebase
 --> MATLAB version and toolboxes versions
