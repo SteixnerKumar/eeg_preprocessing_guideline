@@ -24,6 +24,12 @@ eBridge - EB.Info.Version = '1.0.01' - Copyright © 2013-2014 by Daniel Alschule
 
 CleanLine (tmullen-cleanline-696a7181b7d0) Feb 8, 2012, Tim Mullen, SCCN/INC/UCSD Copyright (C) 2011
 
+
+[TOCM]
+
+[TOC]
+
+
 # EEG pre-processing protocol
 1.) Reading the data (EEG data and the Behavioral data).
 
