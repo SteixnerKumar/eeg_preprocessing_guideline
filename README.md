@@ -1,3 +1,8 @@
+# Contents
+## [General idea](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#tiger_eeg_preprocessing)
+## [Versions and toolboxes](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#the-default-versions-used-for-this-codebase)
+## [EEG pre-processing protocol](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#EEG-pre-processing-protocol)
+
 # tiger_eeg_preprocessing
 The general idea of why this code was created.
 The EEG pre-processing code for the tiger task. It consists of the Hyper-scanning EEG data that needs to be preprocessed.
@@ -23,16 +28,6 @@ AMICA 1.5 (c) Jason Palmer, University of California San Diego, 2015.
 eBridge - EB.Info.Version = '1.0.01' - Copyright © 2013-2014 by Daniel Alschuler
 
 CleanLine (tmullen-cleanline-696a7181b7d0) Feb 8, 2012, Tim Mullen, SCCN/INC/UCSD Copyright (C) 2011
-
-
-[TOCM]
-
-[TOC]
-
-# HYPER-LINKS
-## [Versions and toolboxes](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#the-default-versions-used-for-this-codebase)
-## [General idea](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#tiger_eeg_preprocessing)
-## [EEG pre-processing protocol](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#EEG-pre-processing-protocol)
 
 # EEG pre-processing protocol
 1.) Reading the data (EEG data and the Behavioral data).
