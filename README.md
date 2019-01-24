@@ -6,7 +6,7 @@
 # tiger_eeg_preprocessing
 The general idea of why this code was created.
 The EEG pre-processing code for the tiger task. It consists of the Hyper-scanning EEG data that needs to be preprocessed.
-##[Back to Contents](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#Contents)
+###### [Back to Contents](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#Contents)
 
 # The default versions used for this codebase
 --> MATLAB version and toolboxes versions
@@ -29,6 +29,7 @@ AMICA 1.5 (c) Jason Palmer, University of California San Diego, 2015.
 eBridge - EB.Info.Version = '1.0.01' - Copyright © 2013-2014 by Daniel Alschuler
 
 CleanLine (tmullen-cleanline-696a7181b7d0) Feb 8, 2012, Tim Mullen, SCCN/INC/UCSD Copyright (C) 2011
+###### [Back to Contents](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#Contents)
 
 # EEG pre-processing protocol
 1.) Reading the data (EEG data and the Behavioral data).
@@ -74,5 +75,5 @@ CleanLine (tmullen-cleanline-696a7181b7d0) Feb 8, 2012, Tim Mullen, SCCN/INC/UCS
 20.) save the data for each participant until this step.
 
 21.) Further statistics and analysis to be implemented from here on.
-
+###### [Back to Contents](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#Contents)
 
