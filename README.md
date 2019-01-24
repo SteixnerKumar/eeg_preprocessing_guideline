@@ -29,7 +29,10 @@ CleanLine (tmullen-cleanline-696a7181b7d0) Feb 8, 2012, Tim Mullen, SCCN/INC/UCS
 
 [TOC]
 
-#Versions and toolboxes [Heading link](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#the-default-versions-used-for-this-codebase)
+# HYPER-LINKS
+[Versions and toolboxes](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#the-default-versions-used-for-this-codebase)
+[General idea](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#tiger_eeg_preprocessing)
+[EEG pre-processing protocol](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#EEG-pre-processing-protocol)
 
 # EEG pre-processing protocol
 1.) Reading the data (EEG data and the Behavioral data).
