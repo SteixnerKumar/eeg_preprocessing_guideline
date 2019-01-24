@@ -1,7 +1,7 @@
 # Contents
 ## [General idea](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#tiger_eeg_preprocessing)
 ## [Versions and toolboxes](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#the-default-versions-used-for-this-codebase)
-## [EEG pre-processing protocol](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#EEG-pre-processing-protocol)
+## [EEG pre-processing protocol](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#eeg-pre-processing-protocol-1)
 
 # tiger_eeg_preprocessing
 The general idea of why this code was created.
