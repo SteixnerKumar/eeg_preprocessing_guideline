@@ -10,6 +10,7 @@ The EEG pre-processing code for the tiger task. It consists of the Hyper-scannin
 
 # The default versions used for this codebase
 --> MATLAB version and toolboxes versions
+
 MATLAB Version: 9.3.0.713579 (R2017b)
 
 Operating System: Linux 4.9.0-8-amd64 #1 SMP Debian 4.9.110-3+deb9u5 (2018-09-30) x86_64
