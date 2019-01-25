@@ -396,6 +396,7 @@ B.channels_eog =  zeros(hdr.B.nChans,1);
 A.channels_eog(contains(hdr.A.label,'EX')) = 1;
 B.channels_eog(contains(hdr.B.label,'EX')) = 1;
 %
+fprintf('---Interpolating missing channels for the re-referencing part ....\n');
 % add fake channels with zeros that need to be interpolated
 data.A_temp_interp = zeros(hdr.A.nChans,size(data.Af_cut_asr_repaired,2));
 [f_idx,~]=find(A.channels_to_remove);
@@ -446,7 +447,8 @@ B.EEG_interp = sk_eeg_interp(EEG, bad_chans_B, method); % main function
 data.Af_cut_asr_repaired_interp = A.EEG_interp.data;
 data.Bf_cut_asr_repaired_interp = B.EEG_interp.data;
 clear EEG method
-
+fprintf('---Interpolating missing channels for the re-referencing part ... Done.\n');
+%
 %% Re-referencing
 if wanted.rereferencing
     fprintf('re-referenciong the data to the common average reference (CAR)...\n');
