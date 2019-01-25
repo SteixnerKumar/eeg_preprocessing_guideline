@@ -1,5 +1,5 @@
 % This function is the pre-processing protocol for the EEG
-% Involves the following parts (for details please read the readme file)
+% Involves the following parts
 % 1.) Reading the file
 % 2.) Downsampling
 % 3.) cut the data between the start and end triggers
@@ -13,6 +13,31 @@
 % 10.)
 %
 
+%% add paths
+% warning!!!!!!!!
+% please change these accourding to your system setup
+% eeglab
+addpath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b');
+addpath(genpath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b/functions'));
+removepath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b/functions/octavefunc');
+% eeglab plugins
+addpath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b/plugins/');
+addpath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b/plugins/amica1.5/');
+addpath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b/plugins/clean_rawdata0.34/');
+addpath(genpath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b/plugins/tmullen-cleanline-696a7181b7d0/'));
+% fieldtrip
+addpath('/home/kumar/matlab/work/sk_codes/fieldtrip-lite-20170706/fieldtrip-20170706/');
+ft_defaults;
+% SASICA toolbox
+addpath('/home/kumar/matlab/work/sk_codes/SASICA-master');
+% sk (personal) utilities
+addpath('/home/kumar/matlab/work/sk_codes/sk_utilities');
+% behavioral data folder (if needed)
+addpath('/home/kumar/matlab/work/sk_codes/EEG_data_analysis_01/behave_data');
+% eeg data folder (if needed)
+clear;
+clc;
+
 
 %% basic required parameters
 tt.version = 'enemy'; % 'single', 'enemy', 'friend'
@@ -20,11 +45,16 @@ tt.session = 1; % session number
 tt.sub_A = 30100; %
 tt.sub_B = 30300; %
 %
-plots_wanted = 0; % 1 to check the filter
-plots_see_chan = 15; % the channel number to see
+wanted.downsampling = 1; % '1' for yes, '0' for no
+wanted.bridging_check = 1; % '1' for yes, '0' for no
+wanted.filtering= 1; % '1' for yes, '0' for no (Please filter, else in ASR there is no clean section of data to choose from, hence error)
+wanted.rereferencing = 1; % '1' for yes, '0' for no
+wanted.clean_data = 1; % '1' for yes, '0' for no
+wanted.ica = 1; % '1' for yes, '0' for no
+wanted.ica_algorithm = 'amica'; % wanted.ica_algorithm = 'runica' or 'amica'
+wanted.plots = 0; % 1 to check the filter
+plots_see_chan = 64;%15; % the channel number to see
 fs_new = 512; % new sampling frequency
-filter_bp = [0.05 45]; % the band-pass filter cutoff frequencies
-n_chan = 128; % for each participants number of channels
 
 % downsampling, band-pass, re-ref, artifact-correction, sectioning, baseline-correction
 %% Reading data
@@ -51,35 +81,38 @@ fprintf('Data loaded.\n ');
 % needs to be done on the data, in the header and in the events.
 
 % In the data
-fprintf('Downsampling the data by a factor of %d ...\n ',hdr.both.Fs/fs_new);
-if ~(floor(hdr.both.Fs/fs_new) == hdr.both.Fs/fs_new)
-    error('new sampling rate needs to be a proper divisor of original sampling rate');
-end
-data_both_temp = NaN(size(data.both,1),ceil(size(data.both,2)/(hdr.both.Fs/fs_new))); % initialization of a temporary variable
-fprintf('individual channel-wise out of %d\n',hdr.both.nChans);
-for loop_chan = 1:hdr.both.nChans % filter loop as channel-wise downsampling will be done
-    data_both_temp(loop_chan,:) = downsample(data.both(loop_chan,:),(hdr.both.Fs/fs_new));
-    if (mod(loop_chan,30)==1) && (loop_chan~=1)  % max 30 channels to show in one line
-        fprintf('\n ');
+if wanted.downsampling
+    fprintf('Downsampling the data by a factor of %d ...\n ',hdr.both.Fs/fs_new);
+    if ~(floor(hdr.both.Fs/fs_new) == hdr.both.Fs/fs_new)
+        error('new sampling rate needs to be a proper divisor of original sampling rate');
     end
-    fprintf('%d ',loop_chan);
-end
-fprintf('\n ');
-% fprintf('Downsampling of the data done.\n ');
-data.both = data_both_temp;
-clear data_both_temp;
-% In the events
-for loop_markers = 1:length(strcmp('STATUS', {events.type}))
-    if strcmp('STATUS', {events(loop_markers).type})
-        events(loop_markers).sample = floor(events(loop_markers).sample/(hdr.both.Fs/fs_new));
+    data_both_temp = NaN(size(data.both,1),ceil(size(data.both,2)/(hdr.both.Fs/fs_new))); % initialization of a temporary variable
+    fprintf('individual channel-wise out of %d\n',hdr.both.nChans);
+    for loop_chan = 1:hdr.both.nChans % filter loop as channel-wise downsampling will be done
+        data_both_temp(loop_chan,:) = downsample(data.both(loop_chan,:),(hdr.both.Fs/fs_new));
+        if (mod(loop_chan,30)==1) && (loop_chan~=1)  % max 30 channels to show in one line
+            fprintf('\n ');
+        end
+        fprintf('%d ',loop_chan);
     end
+    fprintf('\n ');
+    % fprintf('Downsampling of the data done.\n ');
+    data.both = data_both_temp;
+    clear data_both_temp;
+    % In the events
+    for loop_markers = 1:length(strcmp('STATUS', {events.type}))
+        if strcmp('STATUS', {events(loop_markers).type})
+            events(loop_markers).sample = floor(events(loop_markers).sample/(hdr.both.Fs/fs_new));
+        end
+    end
+    % In the header
+    hdr.both.nSamples = ceil(hdr.both.nSamples/(hdr.both.Fs/fs_new));
+    hdr.both.Fs = hdr.both.Fs/(hdr.both.Fs/fs_new);
+    clear fs_new loop_chan loop_markers;
+    fprintf('Downsampling of the data done.\n ');
+elseif wanted.downsampling==0
+    fprintf('Downsampling not Done.\n ');
 end
-% In the header
-hdr.both.nSamples = ceil(hdr.both.nSamples/(hdr.both.Fs/fs_new));
-hdr.both.Fs = hdr.both.Fs/(hdr.both.Fs/fs_new);
-clear fs_new loop_chan loop_markers;
-fprintf('Downsampling of the data done.\n ');
-
 
 %% Cut between the start and end
 fprintf('Cutting the data between the start and end of the experiment on the basis of the defined start and end triggers ...\n');
@@ -151,61 +184,102 @@ fprintf('Cutting the data into the two participants ... Done.\n');
 %% Check for Bridging
 A.channels_to_remove_bridge = zeros(hdr.A.nChans,1);
 B.channels_to_remove_bridge = zeros(hdr.B.nChans,1);
-%  [EB_out ,ED_out] = eBridge(ALLEEG(2),{'1-EXG1','1-EXG2','1-EXG3','1-EXG4','1-EXG5','1-EXG6','1-EXG7','1-EXG8','2-EXG1','2-EXG2','2-EXG3','2-EXG4','2-EXG5','2-EXG6','2-EXG7','2-EXG8','Status'});
-fprintf('Checking for bridging ...\n');
-% arranging data for the use by ebridge algorithm
-A.EEG_wrapper.data = data.A;
-A.EEG_wrapper.srate = hdr.A.Fs;
-A.EEG_wrapper.chanlocs = struct('labels',hdr.A.label);
-B.EEG_wrapper.data = data.B;
-B.EEG_wrapper.srate = hdr.B.Fs;
-B.EEG_wrapper.chanlocs = struct('labels',hdr.B.label);
-% sk_ebridge is without plots
-fprintf('Checking for bridges in the first participant ...\n');
-[A.EB_out ,A.ED_out] = sk_eBridge(A.EEG_wrapper,{'1-EXG1','1-EXG2','1-EXG3','1-EXG4','1-EXG5','1-EXG6','1-EXG7','1-EXG8', ...
-    '2-EXG1','2-EXG2','2-EXG3','2-EXG4','2-EXG5','2-EXG6','2-EXG7','2-EXG8','Status'});
-fprintf('Checking for bridges in the second participant ...\n');
-[B.EB_out ,B.ED_out] = sk_eBridge(B.EEG_wrapper,{'1-EXG1','1-EXG2','1-EXG3','1-EXG4','1-EXG5','1-EXG6','1-EXG7','1-EXG8', ...
-    '2-EXG1','2-EXG2','2-EXG3','2-EXG4','2-EXG5','2-EXG6','2-EXG7','2-EXG8','Status'});
-% clear A B
-fprintf('Checking for bridging ... Done.\n');
-% remove the bridged channels
-fprintf('Marking the bridged channels for both participants ...\n');
-% data.A(A.EB_out.Bridged.Indices,:) = [];
-% data.B(B.EB_out.Bridged.Indices,:) = [];
-A.channels_to_remove_bridge(A.EB_out.Bridged.Indices,1) = true;
-B.channels_to_remove_bridge(B.EB_out.Bridged.Indices,1) = true;
-fprintf('Marking the bridged channels for both participants ... Done.\n');
+if wanted.bridging_check
+    A.channels_to_remove_bridge = zeros(hdr.A.nChans,1);
+    B.channels_to_remove_bridge = zeros(hdr.B.nChans,1);
+    %  [EB_out ,ED_out] = eBridge(ALLEEG(2),{'1-EXG1','1-EXG2','1-EXG3','1-EXG4','1-EXG5','1-EXG6','1-EXG7','1-EXG8','2-EXG1','2-EXG2','2-EXG3','2-EXG4','2-EXG5','2-EXG6','2-EXG7','2-EXG8','Status'});
+    fprintf('Checking for bridging ...\n');
+    % arranging data for the use by ebridge algorithm
+    A.EEG_wrapper.data = data.A;
+    A.EEG_wrapper.srate = hdr.A.Fs;
+    A.EEG_wrapper.chanlocs = struct('labels',hdr.A.label);
+    B.EEG_wrapper.data = data.B;
+    B.EEG_wrapper.srate = hdr.B.Fs;
+    B.EEG_wrapper.chanlocs = struct('labels',hdr.B.label);
+    % sk_ebridge is without plots
+    fprintf('Checking for bridges in the first participant ...\n');
+    [A.EB_out ,A.ED_out] = sk_eBridge(A.EEG_wrapper,{'1-EXG1','1-EXG2','1-EXG3','1-EXG4','1-EXG5','1-EXG6','1-EXG7','1-EXG8', ...
+        '2-EXG1','2-EXG2','2-EXG3','2-EXG4','2-EXG5','2-EXG6','2-EXG7','2-EXG8','Status'});
+    fprintf('Checking for bridges in the second participant ...\n');
+    [B.EB_out ,B.ED_out] = sk_eBridge(B.EEG_wrapper,{'1-EXG1','1-EXG2','1-EXG3','1-EXG4','1-EXG5','1-EXG6','1-EXG7','1-EXG8', ...
+        '2-EXG1','2-EXG2','2-EXG3','2-EXG4','2-EXG5','2-EXG6','2-EXG7','2-EXG8','Status'});
+    % clear A B
+    fprintf('Checking for bridging ... Done.\n');
+    % remove the bridged channels
+    fprintf('Marking the bridged channels for both participants ...\n');
+    % data.A(A.EB_out.Bridged.Indices,:) = [];
+    % data.B(B.EB_out.Bridged.Indices,:) = [];
+    A.channels_to_remove_bridge(A.EB_out.Bridged.Indices,1) = true;
+    B.channels_to_remove_bridge(B.EB_out.Bridged.Indices,1) = true;
+    fprintf('Marking the bridged channels for both participants ... Done.\n');
+else
+    fprintf('Bridging check not done.\n');
+end
 
 %% Filtering (highpass, then lowpass)
+% implementation of the line noise filter
+% cleanline(EEG, 'LineFrequencies',[50 100]);
+% [EEG.A, Sorig, Sclean, f, amps, freqs, g] = cleanline('EEG',EEG.A, 'LineFrequencies',[50 100]);
 % pre filter plot
-if plots_wanted
-    figure;
-    subplot(2,2,1);plot(data.A(plots_see_chan,:));title('The unfiltered data time');
-    [XFreqRange, YAmplitude] = sk_dofft(data.A(plots_see_chan,:), hdr.A.Fs, 4);
-    subplot(2,2,2);plot(XFreqRange, YAmplitude);axis([5 100 -0.2 1.5]);title('The unfiltered data freq');
-    clear XFreqRange YAmplitude;
+if wanted.filtering
+    fprintf('Filtering the line noise out for both participants ...\n');
+    if wanted.plots
+        figure;
+        subplot(3,2,1);plot(data.A(plots_see_chan,:));title('The unfiltered data time');
+        [XFreqRange, YAmplitude] = sk_dofft(data.A(plots_see_chan,:), hdr.A.Fs, 4);
+        subplot(3,2,2);plot(XFreqRange, YAmplitude);axis([5 150 -0.2 1.5]);title('The unfiltered data freq');
+        clear XFreqRange YAmplitude;
+    end
+    EEG.A.data = data.A;
+    EEG.A.icawinv = [];
+    EEG.A.srate = hdr.both.Fs;
+    EEG.A.nbchan = size(data.A,1);
+    EEG.A.trials = 1; % no trials
+    EEG.A.pnts = size(data.A,2);
+    EEG.B.data = data.B;
+    EEG.B.icawinv = [];
+    EEG.B.srate = hdr.both.Fs;
+    EEG.B.nbchan = size(data.B,1);
+    EEG.B.trials = 1; % no trials
+    EEG.B.pnts = size(data.B,2);
+    % [EEG.A, ~, ~, ~, ~, , ~] = cleanline('EEG',EEG.A, 'LineFrequencies',[50 100]);
+    [EEG.A, ~, ~, ~, ~, ~, ~] = cleanline('EEG',EEG.A, 'LineFrequencies',[50 100],'ScanForLines',1,'LineAlpha',1,'Bandwidth',1);
+    [EEG.B, ~, ~, ~, ~, ~, ~] = cleanline('EEG',EEG.B, 'LineFrequencies',[50 100],'ScanForLines',1,'LineAlpha',1,'Bandwidth',1);
+    data.Af = EEG.A.data;
+    data.Bf = EEG.B.data;
+    clear EEG
+    % post line filter plot
+    if wanted.plots
+        subplot(3,2,3);plot(data.Af(plots_see_chan,:));title('The filtered data time');
+        [XFreqRange, YAmplitude] = sk_dofft(data.Af(plots_see_chan,:), hdr.A.Fs, 4);
+        subplot(3,2,4);plot(XFreqRange, YAmplitude);axis([5 150 -0.2 1.5]);title('The filtered data freq');
+        clear XFreqRange YAmplitude;
+    end
+    fprintf('Filtering the line noise out for both participants ... Done.\n');
+    %
+    %
+    fprintf('Using low-pass filtering for both participants ...\n');
+    filter.type = 'but'; % the filter type ('but' is for butterworth)
+    filter.dir = 'twopass'; % the filter direction ('twopass' is default for both direction)
+    filter.order = 4; % filter order number
+    filter.lowpass = 90; % in Hz
+    filter.highpass = 1; % in Hz
+    fprintf('Using filter: %s, with direction: %s, order: %d, in range: %d - %d Hz.\n',filter.type,filter.dir,filter.order,filter.highpass,filter.lowpass);
+    [data.Af] = ft_preproc_bandpassfilter(data.Af, hdr.A.Fs, [filter.highpass filter.lowpass], filter.order, filter.type, filter.dir);
+    [data.Bf] = ft_preproc_bandpassfilter(data.Bf, hdr.B.Fs, [filter.highpass filter.lowpass], filter.order, filter.type, filter.dir);
+    fprintf('Using low-pass filtering for both participants ... Done.\n');
+    % post all filter plot
+    if wanted.plots
+        subplot(3,2,5);plot(data.Af(plots_see_chan,:));title('The filtered data time');
+        [XFreqRange, YAmplitude] = sk_dofft(data.Af(plots_see_chan,:), hdr.A.Fs, 4);
+        subplot(3,2,6);plot(XFreqRange, YAmplitude);axis([5 150 -0.2 1.5]);title('The filtered data freq');
+        clear XFreqRange YAmplitude;
+    end
+else
+    fprintf('Data filtering not done.\n');
+    data.Af = data.A;
+    data.Bf = data.B;
 end
-
-fprintf('Filtering the EEG potentials for both participants ...\n');
-filter.type = 'but'; % the filter type ('but' is for butterworth)
-filter.dir = 'twopass'; % the filter direction ('twopass' is default for both direction)
-filter.order = 4; % filter order number
-filter.lowpass = 45; % in Hz
-filter.highpass = 1; % in Hz
-fprintf('Using filter: %s, with direction: %s, order: %d, in range: %d - %d Hz.\n',filter.type,filter.dir,filter.order,filter.highpass,filter.lowpass);
-[data.Af] = ft_preproc_bandpassfilter(data.A, hdr.A.Fs, [filter.highpass filter.lowpass], filter.order, filter.type, filter.dir);
-[data.Bf] = ft_preproc_bandpassfilter(data.B, hdr.B.Fs, [filter.highpass filter.lowpass], filter.order, filter.type, filter.dir);
-fprintf('Filtering the EEG potentials for both participants ... Done.\n');
-
-% post filter plot
-if plots_wanted
-    subplot(2,2,3);plot(data.Af(plots_see_chan,:));title('The filtered data time');
-    [XFreqRange, YAmplitude] = sk_dofft(data.Af(plots_see_chan,:), hdr.A.Fs, 4);
-    subplot(2,2,4);plot(XFreqRange, YAmplitude);axis([5 100 -0.2 1.5]);title('The filtered data freq');
-    clear XFreqRange YAmplitude;
-end
-
 
 %% reject bad channels
 % using cleanraw from the eeglab
@@ -213,94 +287,105 @@ end
 % b) noisy channels
 % c) short-time bursts
 % d) incompletely repaird segments from the data
-fprintf('Cleaning data ...\n');
 
-% find(A.channels_to_remove)'
-% find(B.channels_to_remove)'
-
-% a) flatline channels (based: clean_flatlines)
-fprintf('---Checking and marking for flat-line ...\n');
-max_flatline_duration = 5; % in seconds
-max_allowed_jitter = 20; % as multiples of epsilon
-%
-A.channels_to_remove_flatline = zeros(hdr.A.nChans,1);
-B.channels_to_remove_flatline = zeros(hdr.B.nChans,1);
-temp_A.data = data.Af;temp_A.srate = hdr.A.Fs;temp_A.nbchan = hdr.A.nChans;
-temp_B.data = data.Bf;temp_B.srate = hdr.B.Fs;temp_B.nbchan = hdr.B.nChans;
-%
-temp_A = sk_clean_flatlines(temp_A,max_flatline_duration,max_allowed_jitter);
-temp_B = sk_clean_flatlines(temp_B,max_flatline_duration,max_allowed_jitter);
-%
-A.channels_to_remove_flatline = temp_A.removed_channels;
-B.channels_to_remove_flatline = temp_B.removed_channels;
-clear temp_A temp_B
-fprintf('---Checking and marking for flat-line channels ... Done.\n');
-
-
-% b) noisy channels (remove noisy channels by correlation and line-noise thresholds) (based: clean_channels)
-fprintf('---Checking and marking for noisy channels ...\n');
-min_corr = 0.45; % minimum correlation
-ignored_quantile = 0.1; % check the function description
-window_len = 2; % in seconds
-max_broken_time = 0.5; % in seconds
-linenoise_aware = true; % if there is line noise 
-%
-A.channels_to_remove_noisy = zeros(hdr.A.nChans,1);
-B.channels_to_remove_noisy = zeros(hdr.B.nChans,1);
-temp_A.data = data.Af;temp_A.srate = hdr.A.Fs;temp_A.nbchan = hdr.A.nChans;
-temp_B.data = data.Bf;temp_B.srate = hdr.B.Fs;temp_B.nbchan = hdr.B.nChans;
-%
-temp_A = sk_clean_channels_nolocs(temp_A,min_corr,ignored_quantile,window_len,max_broken_time,linenoise_aware);
-temp_B = sk_clean_channels_nolocs(temp_B,min_corr,ignored_quantile,window_len,max_broken_time,linenoise_aware);
-% flag channels to be implemented
-A.channels_to_remove_noisy = temp_A.removed_channels;
-B.channels_to_remove_noisy = temp_B.removed_channels;
-clear temp_A temp_B
-%
-fprintf('---Checking and marking for noisy channels ... Done.\n');
-%
-
-%%% Here, remove the bad channels before the ASR and the clean windows
-fprintf('Removing the bad channels before the ASR ...\n');
-A.channels_to_remove =  A.channels_to_remove_bridge | A.channels_to_remove_flatline' | A.channels_to_remove_noisy;
-B.channels_to_remove = B.channels_to_remove_bridge | B.channels_to_remove_flatline' | B.channels_to_remove_noisy;
-%
-data.Af_cut = data.Af(~A.channels_to_remove,:);
-data.Bf_cut = data.Bf(~B.channels_to_remove,:);
-fprintf('Removing the bad channels before the ASR ... Done.\n');
-%%%
-
-% c) short-time bursts (based: clean_asr)
-fprintf('---Implementing the artifact sub-space reconstruction (ASR) for short time bursts ...\n');
-% use the defaults
-temp_A.data = data.Af_cut;temp_A.srate = hdr.A.Fs;temp_A.nbchan = size(data.Af_cut,1);
-temp_B.data = data.Bf_cut;temp_B.srate = hdr.B.Fs;temp_B.nbchan = size(data.Bf_cut,1);
-%
-temp_A = sk_clean_asr(temp_A);
-temp_B = sk_clean_asr(temp_B);
-%
-data.Af_cut_asr =  temp_A.data;
-data.Bf_cut_asr =  temp_B.data;
-clear temp_A temp_B
-fprintf('---Implementing the artifact sub-space reconstruction (ASR) for short time bursts ... Done.\n');
-
-% d) incompletely repaird segments from the data
-% use asr data, not filtered data ()
-fprintf('---Remove periods with abnormally high-power content from continuous data ...\n');
-window_crit = 0.25;
-window_crit_tolerances = [-inf 7];
-% 
-temp_A.data = data.Af_cut_asr;temp_A.srate = hdr.A.Fs;temp_A.nbchan = size(data.Af_cut,1);
-temp_B.data = data.Bf_cut_asr;temp_B.srate = hdr.B.Fs;temp_B.nbchan = size(data.Bf_cut,1);
-%
-temp_A = sk_clean_windows(temp_A,window_crit,window_crit_tolerances); 
-temp_B = sk_clean_windows(temp_B,window_crit,window_crit_tolerances); 
-%
-data.Af_cut_asr_repaired =  temp_A.data;
-data.Bf_cut_asr_repaired =  temp_B.data;
-clear temp_A temp_B
-fprintf('---Remove periods with abnormally high-power content from continuous data ... Done.\n');
-%
+A.channels_to_remove = zeros(hdr.A.nChans,1);
+B.channels_to_remove = zeros(hdr.B.nChans,1);
+if wanted.clean_data
+    
+    fprintf('Cleaning data ...\n');
+    
+    % find(A.channels_to_remove)'
+    % find(B.channels_to_remove)'
+    
+    % a) flatline channels (based: clean_flatlines)
+    fprintf('---Checking and marking for flat-line ...\n');
+    max_flatline_duration = 5; % in seconds
+    max_allowed_jitter = 20; % as multiples of epsilon
+    %
+    A.channels_to_remove_flatline = zeros(hdr.A.nChans,1);
+    B.channels_to_remove_flatline = zeros(hdr.B.nChans,1);
+    temp_A.data = data.Af;temp_A.srate = hdr.A.Fs;temp_A.nbchan = hdr.A.nChans;
+    temp_B.data = data.Bf;temp_B.srate = hdr.B.Fs;temp_B.nbchan = hdr.B.nChans;
+    %
+    temp_A = sk_clean_flatlines(temp_A,max_flatline_duration,max_allowed_jitter);
+    temp_B = sk_clean_flatlines(temp_B,max_flatline_duration,max_allowed_jitter);
+    %
+    A.channels_to_remove_flatline = temp_A.removed_channels;
+    B.channels_to_remove_flatline = temp_B.removed_channels;
+    clear temp_A temp_B
+    fprintf('---Checking and marking for flat-line channels ... Done.\n');
+    
+    
+    % b) noisy channels (remove noisy channels by correlation and line-noise thresholds) (based: clean_channels)
+    fprintf('---Checking and marking for noisy channels ...\n');
+    min_corr = 0.45; % minimum correlation
+    ignored_quantile = 0.1; % check the function description
+    window_len = 2; % in seconds
+    max_broken_time = 0.5; % in seconds
+    linenoise_aware = true; % if there is line noise
+    %
+    A.channels_to_remove_noisy = zeros(hdr.A.nChans,1);
+    B.channels_to_remove_noisy = zeros(hdr.B.nChans,1);
+    temp_A.data = data.Af;temp_A.srate = hdr.A.Fs;temp_A.nbchan = hdr.A.nChans;
+    temp_B.data = data.Bf;temp_B.srate = hdr.B.Fs;temp_B.nbchan = hdr.B.nChans;
+    %
+    temp_A = sk_clean_channels_nolocs(temp_A,min_corr,ignored_quantile,window_len,max_broken_time,linenoise_aware);
+    temp_B = sk_clean_channels_nolocs(temp_B,min_corr,ignored_quantile,window_len,max_broken_time,linenoise_aware);
+    % flag channels to be implemented
+    A.channels_to_remove_noisy = temp_A.removed_channels;
+    B.channels_to_remove_noisy = temp_B.removed_channels;
+    clear temp_A temp_B
+    %
+    fprintf('---Checking and marking for noisy channels ... Done.\n');
+    %
+    
+    %%% Here, remove the bad channels before the ASR and the clean windows
+    fprintf('Removing the bad channels before the ASR ...\n');
+    A.channels_to_remove =  A.channels_to_remove_bridge | A.channels_to_remove_flatline' | A.channels_to_remove_noisy;
+    B.channels_to_remove = B.channels_to_remove_bridge | B.channels_to_remove_flatline' | B.channels_to_remove_noisy;
+    %
+    data.Af_cut = data.Af(~A.channels_to_remove,:);
+    data.Bf_cut = data.Bf(~B.channels_to_remove,:);
+    fprintf('Removing the bad channels before the ASR ... Done.\n');
+    %%%
+    
+    % c) short-time bursts (based: clean_asr)
+    fprintf('---Implementing the artifact sub-space reconstruction (ASR) for short time bursts ...\n');
+    % use the defaults
+    temp_A.data = data.Af_cut;temp_A.srate = hdr.A.Fs;temp_A.nbchan = size(data.Af_cut,1);
+    temp_B.data = data.Bf_cut;temp_B.srate = hdr.B.Fs;temp_B.nbchan = size(data.Bf_cut,1);
+    %
+    temp_A = sk_clean_asr(temp_A);
+    temp_B = sk_clean_asr(temp_B);
+    %
+    data.Af_cut_asr =  temp_A.data;
+    data.Bf_cut_asr =  temp_B.data;
+    clear temp_A temp_B
+    fprintf('---Implementing the artifact sub-space reconstruction (ASR) for short time bursts ... Done.\n');
+    
+    % d) incompletely repaird segments from the data
+    % use asr data, not filtered data ()
+    fprintf('---Remove periods with abnormally high-power content from continuous data ...\n');
+    window_crit = 0.25;
+    window_crit_tolerances = [-inf 7];
+    %
+    temp_A.data = data.Af_cut_asr;temp_A.srate = hdr.A.Fs;temp_A.nbchan = size(data.Af_cut,1);
+    temp_B.data = data.Bf_cut_asr;temp_B.srate = hdr.B.Fs;temp_B.nbchan = size(data.Bf_cut,1);
+    %
+    temp_A = sk_clean_windows(temp_A,window_crit,window_crit_tolerances);
+    temp_B = sk_clean_windows(temp_B,window_crit,window_crit_tolerances);
+    %
+    data.Af_cut_asr_repaired =  temp_A.data;
+    data.Bf_cut_asr_repaired =  temp_B.data;
+    clear temp_A temp_B
+    fprintf('---Remove periods with abnormally high-power content from continuous data ... Done.\n');
+    %
+    
+else
+    fprintf('Data cleaning not done.\n');
+    data.Af_cut_asr_repaired = data.Af;
+    data.Bf_cut_asr_repaired = data.Bf;
+end
 
 
 %% interpolating the missing channels
@@ -333,7 +418,7 @@ for loop_fake_chan  =1:hdr.B.nChans
 end
 clear f_idx count_chan loop_fake_chan
 
-% remove the channels that have EOG 
+% remove the channels that have EOG
 data.A_temp_interp = data.A_temp_interp(~A.channels_eog,:);
 data.B_temp_interp = data.B_temp_interp(~B.channels_eog,:);
 % note the bad channels except the EOG for interpolation
@@ -363,17 +448,23 @@ data.Bf_cut_asr_repaired_interp = B.EEG_interp.data;
 clear EEG method
 
 %% Re-referencing
-fprintf('re-referenciong the data to the common average reference (CAR)...\n');
-mean_data_one = mean(A.EEG_interp.data,1);
-mean_data_two = mean(B.EEG_interp.data,1);
-A.EEG_interp.data_car = A.EEG_interp.data - repmat(mean_data_one,size(A.EEG_interp.data,1),1);
-B.EEG_interp.data_car = B.EEG_interp.data - repmat(mean_data_two,size(B.EEG_interp.data,1),1);
-data.Af_cut_asr_repaired_interp_car = A.EEG_interp.data_car;
-data.Bf_cut_asr_repaired_interp_car = B.EEG_interp.data_car;
-clear mean_data_one mean_data_two
-fprintf('re-referenciong the data to the common average reference (CAR)... Done.\n');
+if wanted.rereferencing
+    fprintf('re-referenciong the data to the common average reference (CAR)...\n');
+    mean_data_one = mean(A.EEG_interp.data,1);
+    mean_data_two = mean(B.EEG_interp.data,1);
+    A.EEG_interp.data_car = A.EEG_interp.data - repmat(mean_data_one,size(A.EEG_interp.data,1),1);
+    B.EEG_interp.data_car = B.EEG_interp.data - repmat(mean_data_two,size(B.EEG_interp.data,1),1);
+    data.Af_cut_asr_repaired_interp_car = A.EEG_interp.data_car;
+    data.Bf_cut_asr_repaired_interp_car = B.EEG_interp.data_car;
+    clear mean_data_one mean_data_two
+    fprintf('re-referenciong the data to the common average reference (CAR)... Done.\n');
+else
+    fprintf('Re-referenciong not done.\n');
+    data.Af_cut_asr_repaired_interp_car = data.Af_cut_asr_repaired_interp;
+    data.Bf_cut_asr_repaired_interp_car = data.Bf_cut_asr_repaired_interp;
+end
 
-%% cut the data here into trials/epochs 
+%% cut the data here into trials/epochs
 fprintf('Cutting the data into epochs/trials ...\n');
 flag_bc_trial = 1; % for baseline correction , 0 not not
 if flag_bc_trial
@@ -501,8 +592,8 @@ end
 %%%
 
 
-% [data.trials.prediction.icaweights,data.trials.prediction.icasphere,data.trials.prediction.icameanvar,data.trials.prediction.icabias,data.trials.prediction.icasigns, ... 
-%     data.trials.prediction.icalrates,data.trials.prediction.icadata,data.trials.prediction.icay] = runica(data.trials.prediction.data); % train using defaults 
+% [data.trials.prediction.icaweights,data.trials.prediction.icasphere,data.trials.prediction.icameanvar,data.trials.prediction.icabias,data.trials.prediction.icasigns, ...
+%     data.trials.prediction.icalrates,data.trials.prediction.icadata,data.trials.prediction.icay] = runica(data.trials.prediction.data); % train using defaults
 % figure;erpimage(data.trials.prediction.data(29,:,:),[],1:size(data.trials.prediction.data,2));
 % figure;spectopo(data.trials.prediction.data, 0, 512);
 % % % EEG.trials = size(data.trials.prediction.data,3); % num trials
@@ -525,111 +616,114 @@ data.Af_cut_asr_repaired_interp_car_cut = A.EEG_interp.data_car(~A.channels_to_r
 data.Bf_cut_asr_repaired_interp_car_cut = B.EEG_interp.data_car(~B.channels_to_remove(~B.channels_eog),:);
 
 %% now the ICA
-ica_algorithm = 'amica'; % ica_algorithm = 'runica';
-%
-if strcmp(ica_algorithm,'amica')
-    fprintf('performing the ICA using the AMICA algorithm...\n');
-    [A.ica.icaweights,A.ica.icasphere,A.ica.mods] = runamica15(data.Af_cut_asr_repaired_interp_car_cut);
-    [B.ica.icaweights,B.ica.icasphere,B.ica.mods] = runamica15(data.Bf_cut_asr_repaired_interp_car_cut);
-    fprintf('performing the ICA using the AMICA algorithm... Done.\n');
-elseif strcmp(ica_algorithm,'runica')
-    fprintf('performing the ICA using the runica algorithm...\n');
-    [A.ica.icaweights,A.ica.icasphere,A.ica.icameanvar,A.ica.icabias,A.ica.icasigns,A.ica.icalrates,A.ica.icadata,A.ica.icay] = runica(data.Af_cut_asr_repaired_interp_car_cut); % train using defaults
-    [B.ica.icaweights,B.ica.icasphere,B.ica.icameanvar,B.ica.icabias,B.ica.icasigns,B.ica.icalrates,B.ica.icadata,B.ica.icay] = runica(data.Bf_cut_asr_repaired_interp_car_cut); % train using defaults
-    fprintf('performing the ICA using the runica algorithm... Done.\n');
+if wanted.ica
+    %
+    if strcmp(wanted.ica_algorithm,'amica')
+        fprintf('performing the ICA using the AMICA algorithm...\n');
+        [A.ica.icaweights,A.ica.icasphere,A.ica.mods] = runamica15(data.Af_cut_asr_repaired_interp_car_cut);
+        [B.ica.icaweights,B.ica.icasphere,B.ica.mods] = runamica15(data.Bf_cut_asr_repaired_interp_car_cut);
+        fprintf('performing the ICA using the AMICA algorithm... Done.\n');
+    elseif strcmp(wanted.ica_algorithm,'runica')
+        fprintf('performing the ICA using the runica algorithm...\n');
+        [A.ica.icaweights,A.ica.icasphere,A.ica.icameanvar,A.ica.icabias,A.ica.icasigns,A.ica.icalrates,A.ica.icadata,A.ica.icay] = runica(data.Af_cut_asr_repaired_interp_car_cut); % train using defaults
+        [B.ica.icaweights,B.ica.icasphere,B.ica.icameanvar,B.ica.icabias,B.ica.icasigns,B.ica.icalrates,B.ica.icadata,B.ica.icay] = runica(data.Bf_cut_asr_repaired_interp_car_cut); % train using defaults
+        fprintf('performing the ICA using the runica algorithm... Done.\n');
+    else
+        error('Please choose either amica or runica algorithm in the ICA section');
+    end
+    
+    
+    %% Auto-detection of bad ICA components
+    fprintf('auto detecting the bad ICA components...\n');
+    % calculate the inverse of the ica weights
+    A.ica.icawinv = pinv(A.ica.icaweights*A.ica.icasphere);
+    B.ica.icawinv = pinv(B.ica.icaweights*B.ica.icasphere);
+    % other parameters
+    A.ica.data = data.Af_cut_asr_repaired_interp_car_cut;
+    A.ica.nbchan = size(A.ica.icaweights,1);
+    A.ica.trials = 1;
+    A.ica.times = 1:size(A.ica.data,2);
+    A.ica.srate = hdr.A.Fs;
+    A.ica.icachansind = 1:size(A.ica.icaweights,1);
+    B.ica.data = data.Bf_cut_asr_repaired_interp_car_cut;
+    B.ica.nbchan = size(B.ica.icaweights,1);
+    B.ica.trials = 1;
+    B.ica.times = 1:size(B.ica.data,2);
+    B.ica.srate = hdr.B.Fs;
+    B.ica.icachansind = 1:size(B.ica.icaweights,1);
+    %
+    temp_channels_to_remove = A.channels_to_remove(~A.channels_eog);
+    A.ica.chanlocs = elec(4:end);A.ica.chanlocs = elec(~temp_channels_to_remove);
+    A.ica.icaact = A.ica.icaweights*A.ica.icasphere*A.ica.data;
+    temp_channels_to_remove = B.channels_to_remove(~B.channels_eog);
+    B.ica.chanlocs = elec(4:end);B.ica.chanlocs = elec(~temp_channels_to_remove);
+    B.ica.icaact = B.ica.icaweights*B.ica.icasphere*B.ica.data;
+    
+    % automatic detection of ica components
+    cfg = [];
+    cfg.autocorr.enable = true;
+    cfg.focalcomp.enable = true;
+    % cfg.trialfoc.enable = true;
+    cfg.SNR.enable = true;
+    % cfg.resvar.enable = true; % need dipfit to be done before
+    % cfg.EOGcorr.enable = true; % need EOG channels to do this
+    % cfg.chancorr.enable = true;
+    cfg.ADJUST.enable = true;
+    % cfg.FASTER.enable = true;
+    % cfg.MARA.enable = true; % not implememted
+    cfg.opts.noplot = 1; % '1' for no plots
+    %
+    [A.ica_reject, cfg] = sk_eeg_SASICA(A.ica,cfg);
+    [B.ica_reject, cfg] = sk_eeg_SASICA(B.ica,cfg);
+    %
+    % A.ica_reject.reject.gcompreject % to see the components to reject
+    % B.ica_reject.reject.gcompreject % to see the components to reject
+    fprintf('auto detecting the bad ICA components... Done.\n');
+    
+    %% Removing the bad ICA components
+    fprintf('removing the bad ICA components...\n');
+    A.ica_clean.setname = 'ica_clean';
+    A.ica_clean.nbchan = A.ica.nbchan;
+    A.ica_clean.trials = A.ica.trials;
+    A.ica_clean.data = A.ica.data;
+    A.ica_clean.pnts = size(A.ica.times,2);
+    A.ica_clean.icawinv = A.ica.icawinv;
+    A.ica_clean.icasphere = A.ica.icasphere;
+    A.ica_clean.icaweights = A.ica.icaweights;
+    A.ica_clean.icachansind = A.ica.icachansind;
+    if strcmp(wanted.ica_algorithm,'amica')
+        A.ica_clean.icaact = A.ica.icaweights*A.ica.icasphere*A.ica.data;  % Matrix multiplication
+        B.ica_clean.icaact = B.ica.icaweights*B.ica.icasphere*B.ica.data;  % Matrix multiplication
+    elseif strcmp(wanted.ica_algorithm,'runica')
+        A.ica_clean.icaact = A.ica.icaweights*A.ica.icasphere*A.ica.icadata;  % Matrix multiplication
+        B.ica_clean.icaact = B.ica.icaweights*B.ica.icasphere*B.ica.icadata;  % Matrix multiplication
+    else
+        error('Please choose either amica or runica algorithm in the ICA section');
+    end
+    A.ica_clean.reject.gcompreject = A.ica_reject.reject.gcompreject;
+    A.ica_clean.reject.SASICA = A.ica_reject.reject.SASICA;
+    B.ica_clean.setname = 'ica_clean';
+    B.ica_clean.nbchan = B.ica.nbchan;
+    B.ica_clean.trials = B.ica.trials;
+    B.ica_clean.data = B.ica.data;
+    B.ica_clean.pnts = size(B.ica.times,2);
+    B.ica_clean.icawinv = B.ica.icawinv;
+    B.ica_clean.icasphere = B.ica.icasphere;
+    B.ica_clean.icaweights = B.ica.icaweights;
+    B.ica_clean.icachansind = B.ica.icachansind;
+    B.ica_clean.reject.gcompreject = B.ica_reject.reject.gcompreject;
+    B.ica_clean.reject.SASICA = B.ica_reject.reject.SASICA;
+    % Extract the Component numbers to remove from the output of SASICA in EEG.reject.gcompreject.  Wherever this is 1, that particular ICA component needs to be removed from the data.
+    A.ica_clean.remove_components = find(A.ica_reject.reject.gcompreject == 1);
+    B.ica_clean.remove_components = find(B.ica_reject.reject.gcompreject == 1);
+    % Remove the components from the main data without further ado!
+    A.ica_clean = sk_pop_subcomp(A.ica_clean, A.ica_clean.remove_components);
+    B.ica_clean = sk_pop_subcomp(B.ica_clean, B.ica_clean.remove_components);
+    fprintf('removing the bad ICA components... Done.\n');
+    % ica_clean.data is the cleaned data
+    
 else
-    error('Please choose either amica or runica algorithm in the ICA section');
+    fprintf('ICA not done.\n');
 end
-
-
-%% Auto-detection of bad ICA components
-fprintf('auto detecting the bad ICA components...\n');
-% calculate the inverse of the ica weights
-A.ica.icawinv = pinv(A.ica.icaweights*A.ica.icasphere);
-B.ica.icawinv = pinv(B.ica.icaweights*B.ica.icasphere);
-% other parameters
-A.ica.data = data.Af_cut_asr_repaired_interp_car_cut;
-A.ica.nbchan = size(A.ica.icaweights,1);
-A.ica.trials = 1;
-A.ica.times = 1:size(A.ica.data,2);
-A.ica.srate = hdr.A.Fs;
-A.ica.icachansind = 1:size(A.ica.icaweights,1);
-B.ica.data = data.Bf_cut_asr_repaired_interp_car_cut;
-B.ica.nbchan = size(B.ica.icaweights,1);
-B.ica.trials = 1;
-B.ica.times = 1:size(B.ica.data,2);
-B.ica.srate = hdr.B.Fs;
-B.ica.icachansind = 1:size(B.ica.icaweights,1);
-% 
-temp_channels_to_remove = A.channels_to_remove(~A.channels_eog);
-A.ica.chanlocs = elec(4:end);A.ica.chanlocs = elec(~temp_channels_to_remove);
-A.ica.icaact = A.ica.icaweights*A.ica.icasphere*A.ica.data;
-temp_channels_to_remove = B.channels_to_remove(~B.channels_eog);
-B.ica.chanlocs = elec(4:end);B.ica.chanlocs = elec(~temp_channels_to_remove);
-B.ica.icaact = B.ica.icaweights*B.ica.icasphere*B.ica.data;
-
-% automatic detection of ica components
-cfg = [];
-cfg.autocorr.enable = true;
-cfg.focalcomp.enable = true;
-% cfg.trialfoc.enable = true;
-cfg.SNR.enable = true;
-% cfg.resvar.enable = true; % need dipfit to be done before 
-% cfg.EOGcorr.enable = true; % need EOG channels to do this
-% cfg.chancorr.enable = true;
-cfg.ADJUST.enable = true;
-% cfg.FASTER.enable = true;
-% cfg.MARA.enable = true; % not implememted
-cfg.opts.noplot = 1; % '1' for no plots
-%
-[A.ica_reject, cfg] = sk_eeg_SASICA(A.ica,cfg);
-[B.ica_reject, cfg] = sk_eeg_SASICA(B.ica,cfg);
-%
-% A.ica_reject.reject.gcompreject % to see the components to reject
-% B.ica_reject.reject.gcompreject % to see the components to reject
-fprintf('auto detecting the bad ICA components... Done.\n');
-
-%% Removing the bad ICA components
-fprintf('removing the bad ICA components...\n');
-A.ica_clean.setname = 'ica_clean';
-A.ica_clean.nbchan = A.ica.nbchan;
-A.ica_clean.trials = A.ica.trials;
-A.ica_clean.data = A.ica.data;
-A.ica_clean.pnts = size(A.ica.times,2);
-A.ica_clean.icawinv = A.ica.icawinv;
-A.ica_clean.icasphere = A.ica.icasphere;
-A.ica_clean.icaweights = A.ica.icaweights;
-A.ica_clean.icachansind = A.ica.icachansind;
-if strcmp(ica_algorithm,'amica')
-    A.ica_clean.icaact = A.ica.icaweights*A.ica.icasphere*A.ica.data;  % Matrix multiplication
-    B.ica_clean.icaact = B.ica.icaweights*B.ica.icasphere*B.ica.data;  % Matrix multiplication
-elseif strcmp(ica_algorithm,'runica')
-    A.ica_clean.icaact = A.ica.icaweights*A.ica.icasphere*A.ica.icadata;  % Matrix multiplication
-    B.ica_clean.icaact = B.ica.icaweights*B.ica.icasphere*B.ica.icadata;  % Matrix multiplication
-else
-    error('Please choose either amica or runica algorithm in the ICA section');
-end
-A.ica_clean.reject.gcompreject = A.ica_reject.reject.gcompreject;
-A.ica_clean.reject.SASICA = A.ica_reject.reject.SASICA;
-B.ica_clean.setname = 'ica_clean';
-B.ica_clean.nbchan = B.ica.nbchan;
-B.ica_clean.trials = B.ica.trials;
-B.ica_clean.data = B.ica.data;
-B.ica_clean.pnts = size(B.ica.times,2);
-B.ica_clean.icawinv = B.ica.icawinv;
-B.ica_clean.icasphere = B.ica.icasphere;
-B.ica_clean.icaweights = B.ica.icaweights;
-B.ica_clean.icachansind = B.ica.icachansind;
-B.ica_clean.reject.gcompreject = B.ica_reject.reject.gcompreject;
-B.ica_clean.reject.SASICA = B.ica_reject.reject.SASICA;
-% Extract the Component numbers to remove from the output of SASICA in EEG.reject.gcompreject.  Wherever this is 1, that particular ICA component needs to be removed from the data.
-A.ica_clean.remove_components = find(A.ica_reject.reject.gcompreject == 1);
-B.ica_clean.remove_components = find(B.ica_reject.reject.gcompreject == 1);
-% Remove the components from the main data without further ado!
-A.ica_clean = sk_pop_subcomp(A.ica_clean, A.ica_clean.remove_components);
-B.ica_clean = sk_pop_subcomp(B.ica_clean, B.ica_clean.remove_components);
-fprintf('removing the bad ICA components... Done.\n');
-% ica_clean.data is the cleaned data
-
 
 %%
