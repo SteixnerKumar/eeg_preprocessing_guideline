@@ -462,6 +462,8 @@ else
     fprintf('Re-referenciong not done.\n');
     data.Af_cut_asr_repaired_interp_car = data.Af_cut_asr_repaired_interp;
     data.Bf_cut_asr_repaired_interp_car = data.Bf_cut_asr_repaired_interp;
+    A.EEG_interp.data_car = A.EEG_interp.data;
+    B.EEG_interp.data_car = B.EEG_interp.data;
 end
 
 %% cut the data here into trials/epochs
