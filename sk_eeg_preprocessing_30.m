@@ -62,8 +62,8 @@ diary(strcat('log_tt',strcat('_',datestr(now,'YYYYmmDD'),'_',datestr(now,'HHMMSS
 clc;
 disp('The file parameters : ');disp(tt);fprintf('\n');
 disp('The code parameters -  ''1'' for yes, ''0'' for no : ');disp(wanted);fprintf('\n');
-
 try
+    tic;
     % downsampling, band-pass, re-ref, artifact-correction, sectioning, baseline-correction
     %% Reading data
     fprintf('Loading the data ...\n ');
@@ -738,9 +738,12 @@ try
         fprintf('ICA not done.\n');
     end
     
+    fprintf('\n');
+    toc;
     diary('off');
 catch
     fprintf('\nlogging stopped because of error.\n');
+    toc;
     diary('off');
 end
 
