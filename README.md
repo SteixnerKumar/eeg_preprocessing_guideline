@@ -25,7 +25,7 @@ eeglab14_1_2b
 
 SASICA - Copyright (C) 2014  Maximilien Chaumon
 
-AMICA 1.5 (c) Jason Palmer, University of California San Diego, 2015.
+AMICA 1.5 (c) Jason Palmer, University of California San Diego, 2015. (info: 'chmod 777 ...', admin permissions to the relevent file required to run)
 
 eBridge - EB.Info.Version = '1.0.01' - Copyright © 2013-2014 by Daniel Alschuler
 
