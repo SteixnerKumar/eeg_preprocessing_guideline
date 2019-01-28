@@ -11,25 +11,25 @@ The EEG pre-processing code for the tiger task. It consists of the Hyper-scannin
 # The default versions used for this codebase
 --> MATLAB version and toolboxes versions
 
-MATLAB Version: 9.3.0.713579 (R2017b)
++ MATLAB Version: 9.3.0.713579 (R2017b)
 
-Operating System: Linux 4.9.0-8-amd64 #1 SMP Debian 4.9.110-3+deb9u5 (2018-09-30) x86_64
++ Operating System: Linux 4.9.0-8-amd64 #1 SMP Debian 4.9.110-3+deb9u5 (2018-09-30) x86_64
 
-Java Version: Java 1.8.0_121-b13 with Oracle Corporation Java HotSpot(TM) 64-Bit Server VM mixed mode
++ Java Version: Java 1.8.0_121-b13 with Oracle Corporation Java HotSpot(TM) 64-Bit Server VM mixed mode
 
-Signal Processing Toolbox                             Version 7.5         (R2017b)
++ Signal Processing Toolbox                             Version 7.5         (R2017b)
 
-fieldtrip-lite-20170706
++ fieldtrip-lite-20170706
 
-eeglab14_1_2b
++ eeglab14_1_2b
 
-SASICA - Copyright (C) 2014  Maximilien Chaumon
++ SASICA - Copyright (C) 2014  Maximilien Chaumon
 
-AMICA 1.5 (c) Jason Palmer, University of California San Diego, 2015. (info: 'chmod 777 ...', admin permissions to the relevent file required to run)
++ AMICA 1.5 (c) Jason Palmer, University of California San Diego, 2015. (info: 'chmod 777 ...', admin permissions to the relevent file required to run)
 
-eBridge - EB.Info.Version = '1.0.01' - Copyright © 2013-2014 by Daniel Alschuler
++ eBridge - EB.Info.Version = '1.0.01' - Copyright © 2013-2014 by Daniel Alschuler
 
-CleanLine (tmullen-cleanline-696a7181b7d0) Feb 8, 2012, Tim Mullen, SCCN/INC/UCSD Copyright (C) 2011
++ CleanLine (tmullen-cleanline-696a7181b7d0) Feb 8, 2012, Tim Mullen, SCCN/INC/UCSD Copyright (C) 2011
 ###### [Back to Contents](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#Contents)
 
 # EEG pre-processing protocol
