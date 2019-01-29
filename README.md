@@ -80,3 +80,4 @@ The EEG pre-processing code for the tiger task. It consists of the Hyper-scannin
 + Further statistics and analysis to be implemented from here on.
 ###### [Back to Contents](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#Contents)
 
+***author: Saurabh Kumar*** 
