@@ -63,8 +63,6 @@ The EEG pre-processing code for the tiger task. It consists of the Hyper-scannin
 
 + Re-referencing the data to common average reference (CAR). [optional step, can be turned on ('1') or off ('0')]
 
-+ Cut the data into the trials  (prediction, choice, etc...).
-
 + perform baseline correction.
 
 + remove the interpolated channels before the ICA is performed. This is done to avoid any rank deficiency that came with the inperpolation of the missing/rejected channels.
@@ -73,9 +71,11 @@ The EEG pre-processing code for the tiger task. It consists of the Hyper-scannin
 
 + Automatic detection of the artifacts in the component space using the Guided Selection of ICA components for Artifact rejection (SASICA) algorithm.
 
-+ Option here is to work in the component space here / or / convert back using the inverse ICAweights to the sensor space.
++ Cut the data into the trials  (prediction, choice, etc...). (optional mean baseline correction possibility) [optional step, can be turned on ('1') or off ('0')]
 
-+ save the data for each participant until this step.
++ save the data for each participant until this step. [optional step, can be turned on ('1') or off ('0')]
+
++ Option here is to work in the component space here / or / convert back using the inverse ICAweights to the sensor space.
 
 + Further statistics and analysis to be implemented from here on.
 ###### [Back to Contents](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#Contents)
