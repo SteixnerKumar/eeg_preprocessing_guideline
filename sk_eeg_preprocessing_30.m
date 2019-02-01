@@ -44,16 +44,19 @@ tt.session = 1; % session number
 tt.sub_A = 30100; %
 tt.sub_B = 30300; %
 %
+wanted.save = 1;
 wanted.downsampling = 1; % '1' for yes, '0' for no
+wanted.fs_new = 256;%512; % new sampling frequency
 wanted.bridging_check = 1; % '1' for yes, '0' for no
 wanted.filtering= 1; % '1' for yes, '0' for no (Please filter, else in ASR there is no clean section of data to choose from, hence error)
 wanted.rereferencing = 1; % '1' for yes, '0' for no
 wanted.clean_data = 1; % '1' for yes, '0' for no
 wanted.ica = 1; % '1' for yes, '0' for no
 wanted.ica_algorithm = 'amica'; % wanted.ica_algorithm = 'runica' or 'amica'
+wanted.trials = 1;
 wanted.plots = 0; % 1 to check the filter
 plots_see_chan = 64;%15; % the channel number to see
-fs_new = 512; % new sampling frequency
+
 
 %% Logging
 diary(strcat('log_tt',strcat('_',datestr(now,'YYYYmmDD'),'_',datestr(now,'HHMMSS'),'_'),...
@@ -90,14 +93,14 @@ try
     
     % In the data
     if wanted.downsampling
-        fprintf('Downsampling the data by a factor of %d ...\n ',hdr.both.Fs/fs_new);
-        if ~(floor(hdr.both.Fs/fs_new) == hdr.both.Fs/fs_new)
+        fprintf('Downsampling the data by a factor of %d ...\n ',hdr.both.Fs/wanted.fs_new);
+        if ~(floor(hdr.both.Fs/wanted.fs_new) == hdr.both.Fs/wanted.fs_new)
             error('new sampling rate needs to be a proper divisor of original sampling rate');
         end
-        data_both_temp = NaN(size(data.both,1),ceil(size(data.both,2)/(hdr.both.Fs/fs_new))); % initialization of a temporary variable
+        data_both_temp = NaN(size(data.both,1),ceil(size(data.both,2)/(hdr.both.Fs/wanted.fs_new))); % initialization of a temporary variable
         fprintf('individual channel-wise out of %d\n',hdr.both.nChans);
         for loop_chan = 1:hdr.both.nChans % filter loop as channel-wise downsampling will be done
-            data_both_temp(loop_chan,:) = downsample(data.both(loop_chan,:),(hdr.both.Fs/fs_new));
+            data_both_temp(loop_chan,:) = downsample(data.both(loop_chan,:),(hdr.both.Fs/wanted.fs_new));
             if (mod(loop_chan,30)==1) && (loop_chan~=1)  % max 30 channels to show in one line
                 fprintf('\n ');
             end
@@ -110,13 +113,13 @@ try
         % In the events
         for loop_markers = 1:length(strcmp('STATUS', {events.type}))
             if strcmp('STATUS', {events(loop_markers).type})
-                events(loop_markers).sample = floor(events(loop_markers).sample/(hdr.both.Fs/fs_new));
+                events(loop_markers).sample = floor(events(loop_markers).sample/(hdr.both.Fs/wanted.fs_new));
             end
         end
         % In the header
-        hdr.both.nSamples = ceil(hdr.both.nSamples/(hdr.both.Fs/fs_new));
-        hdr.both.Fs = hdr.both.Fs/(hdr.both.Fs/fs_new);
-        clear fs_new loop_chan loop_markers;
+        hdr.both.nSamples = ceil(hdr.both.nSamples/(hdr.both.Fs/wanted.fs_new));
+        hdr.both.Fs = hdr.both.Fs/(hdr.both.Fs/wanted.fs_new);
+        clear wanted.fs_new loop_chan loop_markers;
         fprintf('Downsampling of the data done.\n ');
     elseif wanted.downsampling==0
         fprintf('Downsampling not Done.\n ');
@@ -476,152 +479,6 @@ try
         B.EEG_interp.data_car = B.EEG_interp.data;
     end
     
-    %% cut the data here into trials/epochs
-    fprintf('Cutting the data into epochs/trials ...\n');
-    flag_bc_trial = 1; % for baseline correction , 0 not not
-    if flag_bc_trial
-        temp_baseline_correction_time = 200; % time in milliseconds
-        temp_baseline_correction_time = ceil((temp_baseline_correction_time/1000)*hdr.both.Fs); % in points
-    end
-    % to get the trigger values
-    events_trigger = events(strcmp({events.type}, 'STATUS'));
-    byte.second = nan(1,size(events_trigger,2));
-    for loop_triggers = 1:size(events_trigger,2)
-        in_binary = dec2bin(events_trigger(loop_triggers).value,24)-'0';
-        binary_usb = in_binary(9:16);
-        byte.second(loop_triggers) = bin2dec(num2str(binary_usb));
-    end
-    %%%
-    % trial.type = {'prediction','choice'};
-    % trial.type{1}%trial.type{2}
-    % length(trial.type)
-    % trial.prediction = [behave_data.A.ttsk.trig.start_prediction behave_data.A.ttsk.trig.end_prediction];
-    %%%
-    % trial sections
-    trial.num = length(find(byte.second == behave_data.A.ttsk.trig.start_evidence_own));
-    trial.prediction = [behave_data.A.ttsk.trig.start_prediction behave_data.A.ttsk.trig.end_prediction];
-    trial.choice = [behave_data.A.ttsk.trig.start_choice behave_data.A.ttsk.trig.end_choice];
-    trial.evidence_other = [behave_data.A.ttsk.trig.start_evidence_other_player behave_data.A.ttsk.trig.end_evidence_other_player];
-    trial.evidence_own = [behave_data.A.ttsk.trig.start_evidence_own behave_data.A.ttsk.trig.end_evidence_own];
-    trial.response_prediction_A = [behave_data.A.ttsk.trig.start_prediction behave_data.A.ttsk.trig.response_prediction_A];
-    trial.response_choice_A = [behave_data.A.ttsk.trig.start_choice behave_data.A.ttsk.trig.response_choice_A];
-    trial.response_prediction_B = [behave_data.A.ttsk.trig.start_prediction behave_data.A.ttsk.trig.response_prediction_B];
-    trial.response_choice_B = [behave_data.A.ttsk.trig.start_choice behave_data.A.ttsk.trig.response_choice_B];
-    % get the points in the data
-    trial.points.prediction = [[events_trigger(byte.second == trial.prediction(1)).sample];[events_trigger(byte.second == trial.prediction(2)).sample]]';
-    trial.points.choice = [[events_trigger(byte.second == trial.choice(1)).sample];[events_trigger(byte.second == trial.choice(2)).sample]]';
-    trial.points.evidence_other = [[events_trigger(byte.second == trial.evidence_other(1)).sample];[events_trigger(byte.second == trial.evidence_other(2)).sample]]';
-    trial.points.evidence_own = [[events_trigger(byte.second == trial.evidence_own(1)).sample];[events_trigger(byte.second == trial.evidence_own(2)).sample]]';
-    trial.points.response_prediction_A = [[events_trigger(byte.second == trial.response_prediction_A(1)).sample];[events_trigger(byte.second == trial.response_prediction_A(2)).sample]]';
-    trial.points.response_choice_A = [[events_trigger(byte.second == trial.response_choice_A(1)).sample];[events_trigger(byte.second == trial.response_choice_A(2)).sample]]';
-    trial.points.response_prediction_B = [[events_trigger(byte.second == trial.response_prediction_B(1)).sample];[events_trigger(byte.second == trial.response_prediction_B(2)).sample]]';
-    trial.points.response_choice_B = [[events_trigger(byte.second == trial.response_choice_B(1)).sample];[events_trigger(byte.second == trial.response_choice_B(2)).sample]]';
-    % cutting the data
-    % rowsXcolumnXtrials
-    data.trials.prediction.data = nan(size(data.Af_cut_asr_repaired_interp_car,1),max(trial.points.prediction(:,2)-trial.points.prediction(:,1))+1,trial.num);
-    data.trials.choice.data = nan(size(data.Af_cut_asr_repaired_interp_car,1),max(trial.points.choice(:,2)-trial.points.choice(:,1))+1,trial.num);
-    data.trials.evidence_other.data = nan(size(data.Af_cut_asr_repaired_interp_car,1),max(trial.points.evidence_other(:,2)-trial.points.evidence_other(:,1))+1,trial.num);
-    data.trials.evidence_own.data = nan(size(data.Af_cut_asr_repaired_interp_car,1),max(trial.points.evidence_own(:,2)-trial.points.evidence_own(:,1))+1,trial.num);
-    data.trials.response_prediction_A.data = nan(size(data.Af_cut_asr_repaired_interp_car,1),max(trial.points.response_prediction_A(:,2)-trial.points.response_prediction_A(:,1))+1,trial.num);
-    data.trials.response_choice_A.data = nan(size(data.Af_cut_asr_repaired_interp_car,1),max(trial.points.response_choice_A(:,2)-trial.points.response_choice_A(:,1))+1,trial.num);
-    data.trials.response_prediction_B.data = nan(size(data.Af_cut_asr_repaired_interp_car,1),max(trial.points.response_prediction_B(:,2)-trial.points.response_prediction_B(:,1))+1,trial.num);
-    data.trials.response_choice_B.data = nan(size(data.Af_cut_asr_repaired_interp_car,1),max(trial.points.response_choice_B(:,2)-trial.points.response_choice_B(:,1))+1,trial.num);
-    %
-    for loop_trials = 1:trial.num
-        data.trials.prediction.data(:,1:(trial.points.prediction(loop_trials,2) - trial.points.prediction(loop_trials,1)+1),loop_trials) = ...
-            data.Af_cut_asr_repaired_interp_car(:,trial.points.prediction(loop_trials,1):trial.points.prediction(loop_trials,2));
-        data.trials.choice.data(:,1:(trial.points.choice(loop_trials,2) - trial.points.choice(loop_trials,1)+1),loop_trials) = ...
-            data.Af_cut_asr_repaired_interp_car(:,trial.points.choice(loop_trials,1):trial.points.choice(loop_trials,2));
-        data.trials.evidence_other.data(:,1:(trial.points.evidence_other(loop_trials,2) - trial.points.evidence_other(loop_trials,1)+1),loop_trials) = ...
-            data.Af_cut_asr_repaired_interp_car(:,trial.points.evidence_other(loop_trials,1):trial.points.evidence_other(loop_trials,2));
-        data.trials.evidence_own.data(:,1:(trial.points.evidence_own(loop_trials,2) - trial.points.evidence_own(loop_trials,1)+1),loop_trials) = ...
-            data.Af_cut_asr_repaired_interp_car(:,trial.points.evidence_own(loop_trials,1):trial.points.evidence_own(loop_trials,2));
-        data.trials.response_prediction_A.data(:,1:(trial.points.response_prediction_A(loop_trials,2) - trial.points.response_prediction_A(loop_trials,1)+1),loop_trials) = ...
-            data.Af_cut_asr_repaired_interp_car(:,trial.points.response_prediction_A(loop_trials,1):trial.points.response_prediction_A(loop_trials,2));
-        data.trials.response_choice_A.data(:,1:(trial.points.response_choice_A(loop_trials,2) - trial.points.response_choice_A(loop_trials,1)+1),loop_trials) = ...
-            data.Af_cut_asr_repaired_interp_car(:,trial.points.response_choice_A(loop_trials,1):trial.points.response_choice_A(loop_trials,2));
-        data.trials.response_prediction_B.data(:,1:(trial.points.response_prediction_B(loop_trials,2) - trial.points.response_prediction_B(loop_trials,1)+1),loop_trials) = ...
-            data.Af_cut_asr_repaired_interp_car(:,trial.points.response_prediction_B(loop_trials,1):trial.points.response_prediction_B(loop_trials,2));
-        data.trials.response_choice_B.data(:,1:(trial.points.response_choice_B(loop_trials,2) - trial.points.response_choice_B(loop_trials,1)+1),loop_trials) = ...
-            data.Af_cut_asr_repaired_interp_car(:,trial.points.response_choice_B(loop_trials,1):trial.points.response_choice_B(loop_trials,2));
-    end
-    % cutting the edges for equal trial lengths
-    data.trials.prediction.data = data.trials.prediction.data(:,1:min(trial.points.prediction(:,2)-trial.points.prediction(:,1))+1,:);
-    data.trials.choice.data = data.trials.choice.data(:,1:min(trial.points.choice(:,2)-trial.points.choice(:,1))+1,:);
-    data.trials.evidence_other.data = data.trials.evidence_other.data(:,1:min(trial.points.evidence_other(:,2)-trial.points.evidence_other(:,1))+1,:);
-    data.trials.evidence_own.data = data.trials.evidence_own.data(:,1:min(trial.points.evidence_own(:,2)-trial.points.evidence_own(:,1))+1,:);
-    data.trials.response_prediction_A.data = data.trials.response_prediction_A.data(:,1:min(trial.points.response_prediction_A(:,2)-trial.points.response_prediction_A(:,1))+1,:);
-    data.trials.response_choice_A.data = data.trials.response_choice_A.data(:,1:min(trial.points.response_choice_A(:,2)-trial.points.response_choice_A(:,1))+1,:);
-    data.trials.response_prediction_B.data = data.trials.response_prediction_B.data(:,1:min(trial.points.response_prediction_B(:,2)-trial.points.response_prediction_B(:,1))+1,:);
-    data.trials.response_choice_B.data = data.trials.response_choice_B.data(:,1:min(trial.points.response_choice_B(:,2)-trial.points.response_choice_B(:,1))+1,:);
-    %
-    fprintf('Cutting the data into epochs/trials ... Done.\n');
-    
-    %%% Now baseline corect them
-    if flag_bc_trial
-        fprintf('Baseline correction of the epochs/trials ...\n');
-        % marking the points
-        trial.points.bc.prediction = [trial.points.prediction(:,1)-temp_baseline_correction_time,trial.points.prediction(:,1)];
-        trial.points.bc.choice = [trial.points.choice(:,1)-temp_baseline_correction_time,trial.points.choice(:,1)];
-        trial.points.bc.evidence_other = [trial.points.evidence_other(:,1)-temp_baseline_correction_time,trial.points.evidence_other(:,1)];
-        trial.points.bc.evidence_own = [trial.points.evidence_own(:,1)-temp_baseline_correction_time,trial.points.evidence_own(:,1)];
-        trial.points.bc.response_prediction_A = [trial.points.response_prediction_A(:,1)-temp_baseline_correction_time,trial.points.response_prediction_A(:,1)];
-        trial.points.bc.response_choice_A = [trial.points.response_choice_A(:,1)-temp_baseline_correction_time,trial.points.response_choice_A(:,1)];
-        trial.points.bc.response_prediction_B = [trial.points.response_prediction_B(:,1)-temp_baseline_correction_time,trial.points.response_prediction_B(:,1)];
-        trial.points.bc.response_choice_B = [trial.points.response_choice_B(:,1)-temp_baseline_correction_time,trial.points.response_choice_B(:,1)];
-        % cutting and getting the mean
-        trial.points.bc.mean.prediction = nan(size(data.Af_cut_asr_repaired_interp_car,1),trial.num);
-        trial.points.bc.mean.choice = nan(size(data.Af_cut_asr_repaired_interp_car,1),trial.num);
-        trial.points.bc.mean.evidence_other = nan(size(data.Af_cut_asr_repaired_interp_car,1),trial.num);
-        trial.points.bc.mean.evidence_own = nan(size(data.Af_cut_asr_repaired_interp_car,1),trial.num);
-        trial.points.bc.mean.response_prediction_A = nan(size(data.Af_cut_asr_repaired_interp_car,1),trial.num);
-        trial.points.bc.mean.response_choice_A = nan(size(data.Af_cut_asr_repaired_interp_car,1),trial.num);
-        trial.points.bc.mean.response_prediction_B = nan(size(data.Af_cut_asr_repaired_interp_car,1),trial.num);
-        trial.points.bc.mean.response_choice_B = nan(size(data.Af_cut_asr_repaired_interp_car,1),trial.num);
-        for loop_trials = 1:trial.num
-            trial.points.bc.mean.prediction(:,loop_trials) = mean(data.Af_cut_asr_repaired_interp_car(:,trial.points.bc.prediction(loop_trials,1):trial.points.bc.prediction(loop_trials,2)),2);
-            trial.points.bc.mean.choice(:,loop_trials) = mean(data.Af_cut_asr_repaired_interp_car(:,trial.points.bc.choice(loop_trials,1):trial.points.bc.choice(loop_trials,2)),2);
-            trial.points.bc.mean.evidence_other(:,loop_trials) = mean(data.Af_cut_asr_repaired_interp_car(:,trial.points.bc.evidence_other(loop_trials,1):trial.points.bc.evidence_other(loop_trials,2)),2);
-            trial.points.bc.mean.evidence_own(:,loop_trials) = mean(data.Af_cut_asr_repaired_interp_car(:,trial.points.bc.evidence_own(loop_trials,1):trial.points.bc.evidence_own(loop_trials,2)),2);
-            trial.points.bc.mean.response_prediction_A(:,loop_trials) = mean(data.Af_cut_asr_repaired_interp_car(:,trial.points.bc.response_prediction_A(loop_trials,1):trial.points.bc.response_prediction_A(loop_trials,2)),2);
-            trial.points.bc.mean.response_choice_A(:,loop_trials) = mean(data.Af_cut_asr_repaired_interp_car(:,trial.points.bc.response_choice_A(loop_trials,1):trial.points.bc.response_choice_A(loop_trials,2)),2);
-            trial.points.bc.mean.response_prediction_B(:,loop_trials) = mean(data.Af_cut_asr_repaired_interp_car(:,trial.points.bc.response_prediction_B(loop_trials,1):trial.points.bc.response_prediction_B(loop_trials,2)),2);
-            trial.points.bc.mean.response_choice_B(:,loop_trials) = mean(data.Af_cut_asr_repaired_interp_car(:,trial.points.bc.response_choice_B(loop_trials,1):trial.points.bc.response_choice_B(loop_trials,2)),2);
-        end
-        % substracting the mean from the data
-        for loop_trials = 1:trial.num
-            data.trials.prediction.data(:,:,loop_trials) = data.trials.prediction.data(:,:,loop_trials) - repmat(trial.points.bc.mean.prediction(:,loop_trials),1,size(data.trials.prediction.data,2));
-            data.trials.choice.data(:,:,loop_trials) = data.trials.choice.data(:,:,loop_trials) - repmat(trial.points.bc.mean.choice(:,loop_trials),1,size(data.trials.choice.data,2));
-            data.trials.evidence_other.data(:,:,loop_trials) = data.trials.evidence_other.data(:,:,loop_trials) - repmat(trial.points.bc.mean.evidence_other(:,loop_trials),1,size(data.trials.evidence_other.data,2));
-            data.trials.evidence_own.data(:,:,loop_trials) = data.trials.evidence_own.data(:,:,loop_trials) - repmat(trial.points.bc.mean.evidence_own(:,loop_trials),1,size(data.trials.evidence_own.data,2));
-            data.trials.response_prediction_A.data(:,:,loop_trials) = data.trials.response_prediction_A.data(:,:,loop_trials) - repmat(trial.points.bc.mean.response_prediction_A(:,loop_trials),1,size(data.trials.response_prediction_A.data,2));
-            data.trials.response_choice_A.data(:,:,loop_trials) = data.trials.response_choice_A.data(:,:,loop_trials) - repmat(trial.points.bc.mean.response_choice_A(:,loop_trials),1,size(data.trials.response_choice_A.data,2));
-            data.trials.response_prediction_B.data(:,:,loop_trials) = data.trials.response_prediction_B.data(:,:,loop_trials) - repmat(trial.points.bc.mean.response_prediction_B(:,loop_trials),1,size(data.trials.response_prediction_B.data,2));
-            data.trials.response_choice_B.data(:,:,loop_trials) = data.trials.response_choice_B.data(:,:,loop_trials) - repmat(trial.points.bc.mean.response_choice_B(:,loop_trials),1,size(data.trials.response_choice_B.data,2));
-        end
-        fprintf('Baseline correction of the epochs/trials ... Done.\n');
-    end
-    %%%
-    
-    
-    % [data.trials.prediction.icaweights,data.trials.prediction.icasphere,data.trials.prediction.icameanvar,data.trials.prediction.icabias,data.trials.prediction.icasigns, ...
-    %     data.trials.prediction.icalrates,data.trials.prediction.icadata,data.trials.prediction.icay] = runica(data.trials.prediction.data); % train using defaults
-    % figure;erpimage(data.trials.prediction.data(29,:,:),[],1:size(data.trials.prediction.data,2));
-    % figure;spectopo(data.trials.prediction.data, 0, 512);
-    % % % EEG.trials = size(data.trials.prediction.data,3); % num trials
-    % % % EEG.data = data.trials.prediction.data;
-    % % % EEG.nbchan = size(data.trials.prediction.data,1);
-    % % % EEG.pnts = size(data.trials.prediction.data,2);EEG.srate = 512;
-    % % % EEG.xmin = 1;EEG.xmax = EEG.pnts;
-    % % % pop_erpimage(EEG,1);
-    % % % %
-    % % % EEG.trials = size(data.trials.choice.data,3); % no trials
-    % % % EEG.data = data.trials.choice.data;
-    % % % EEG.nbchan = size(data.trials.choice.data,1);
-    % % % EEG.pnts = size(data.trials.choice.data,2);EEG.srate = 512;
-    % % % EEG.xmin = 1;EEG.xmax = EEG.pnts;
-    % % % pop_erpimage(EEG,1);
-    
     
     %% remove the interpolated channels before ICA
     data.Af_cut_asr_repaired_interp_car_cut = A.EEG_interp.data_car(~A.channels_to_remove(~A.channels_eog),:);
@@ -738,6 +595,74 @@ try
         fprintf('ICA not done.\n');
     end
     
+    %% cut the data here into trials/epochs
+    if wanted.trials && wanted.ica
+        % for participant A
+        sktt = [];
+        sktt.Fs = hdr.both.Fs;
+        sktt.events = events;
+        sktt.data = A.ica_clean.data;
+        sktt.flag_bc_trial = 1;
+        sktt.trig = behave_data.A.ttsk.trig;
+        [temp_data, ~] = sk_trials_creation(sktt);
+        A.ica_clean_trials = temp_data.trials;
+        clear ttsk temp_data
+        %
+        % for participant B
+        sktt = [];
+        sktt.Fs = hdr.both.Fs;
+        sktt.events = events;
+        sktt.data = B.ica_clean.data;
+        sktt.flag_bc_trial = 1;
+        % temporarily interchange the A and B trigger numbers for cutting the
+        % data according to the participant B
+        temp_trig_B = behave_data.B.ttsk.trig;
+        temp_trig_B.response_prediction_A = behave_data.B.ttsk.trig.response_prediction_B;
+        temp_trig_B.response_prediction_B = behave_data.B.ttsk.trig.response_prediction_A;
+        temp_trig_B.response_choice_A = behave_data.B.ttsk.trig.response_prediction_B;
+        temp_trig_B.response_choice_B = behave_data.B.ttsk.trig.response_prediction_A;
+        sktt.trig = temp_trig_B;
+        [temp_data, ~] = sk_trials_creation(sktt);
+        B.ica_clean_trials = temp_data.trials;
+        clear ttsk temp_data temp_trig_B
+    else
+        fprintf('data not cut into trials.\n');
+    end
+    %
+    %% Save the relevent data at this point
+    %
+    if wanted.save
+        fprintf('------ saving the ICA cleaned session ------ and ------ ICA cleaned data in trials. ------ \n');
+        if wanted.ica
+            temp_save_A.data = A.ica_clean;
+            temp_save_B.data = B.ica_clean;
+        end
+        if wanted.trials
+            temp_save_A.trials = A.ica_clean_trials;
+            temp_save_B.trials = B.ica_clean_trials;
+        end
+        temp_save_A.original = data.A;
+        temp_save_B.original = data.B;
+        temp_save_A.hdr = hdr.A;
+        temp_save_B.hdr = hdr.B;
+        temp_save_A.events = events;
+        temp_save_B.events = events;
+        temp_save_A.settings = wanted;
+        temp_save_B.settings = wanted;
+        temp_save_A.behaviour = behave_data.A;
+        temp_save_B.behaviour = behave_data.B;
+        temp_save_A.name = strcat('tt_preprocessed_',strcat('_',datestr(now,'YYYYmmDD'),'_',datestr(now,'HHMMSS'),'_'),...
+            tt.version,'_session_',num2str(tt.session),'_vp',num2str(tt.sub_A),'.mat');
+        temp_save_B.name = strcat('tt_preprocessed_',strcat('_',datestr(now,'YYYYmmDD'),'_',datestr(now,'HHMMSS'),'_'),...
+            tt.version,'_session_',num2str(tt.session),'_vp',num2str(tt.sub_B),'.mat');
+        save(temp_save_A.name,'temp_save_A');
+        save(temp_save_B.name,'temp_save_B');
+        fprintf('------ saving the ICA cleaned session ------ and ------ ICA cleaned data in trials. ------ Done.\n');
+    else
+        fprintf('data not saved.\n');
+    end
+    %
+    %%
     fprintf('\n');
     toc;
     diary('off');
