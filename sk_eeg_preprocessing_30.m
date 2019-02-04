@@ -655,8 +655,8 @@ try
             tt.version,'_session_',num2str(tt.session),'_vp',num2str(tt.sub_A),'.mat');
         temp_save_B.name = strcat('tt_preprocessed_',strcat('_',datestr(now,'YYYYmmDD'),'_',datestr(now,'HHMMSS'),'_'),...
             tt.version,'_session_',num2str(tt.session),'_vp',num2str(tt.sub_B),'.mat');
-        save(temp_save_A.name,'temp_save_A');
-        save(temp_save_B.name,'temp_save_B');
+        save(temp_save_A.name,'temp_save_A','-v7.3');
+        save(temp_save_B.name,'temp_save_B','-v7.3');
         fprintf('------ saving the ICA cleaned session ------ and ------ ICA cleaned data in trials. ------ Done.\n');
     else
         fprintf('data not saved.\n');
