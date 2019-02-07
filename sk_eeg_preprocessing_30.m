@@ -651,12 +651,16 @@ try
         temp_save_B.settings = wanted;
         temp_save_A.behaviour = behave_data.A;
         temp_save_B.behaviour = behave_data.B;
+        temp_save_A.elec = elec;
+        temp_save_B.elec = elec;
+        temp_save_A.bad_chans = bad_chans_A;
+        temp_save_B.bad_chans = bad_chans_B;
         temp_save_A.name = strcat('tt_preprocessed_',strcat('_',datestr(now,'YYYYmmDD'),'_',datestr(now,'HHMMSS'),'_'),...
             tt.version,'_session_',num2str(tt.session),'_vp',num2str(tt.sub_A),'.mat');
         temp_save_B.name = strcat('tt_preprocessed_',strcat('_',datestr(now,'YYYYmmDD'),'_',datestr(now,'HHMMSS'),'_'),...
             tt.version,'_session_',num2str(tt.session),'_vp',num2str(tt.sub_B),'.mat');
-        save(temp_save_A.name,'temp_save_A','-v7.3');
-        save(temp_save_B.name,'temp_save_B','-v7.3');
+        save(temp_save_A.name,'temp_save_A', '-v7.3');
+        save(temp_save_B.name,'temp_save_B', '-v7.3');
         fprintf('------ saving the ICA cleaned session ------ and ------ ICA cleaned data in trials. ------ Done.\n');
     else
         fprintf('data not saved.\n');
