@@ -17,34 +17,35 @@
 % warning!!!!!!!!
 % please change these accourding to your system setup
 % eeglab
-addpath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b');
-addpath(genpath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b/functions'));
-removepath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b/functions/octavefunc');
+addpath('/projects/crunchie/kumar/kumar_working_directory/matlab/work/sk_codes/eeglab14_1_2b');
+addpath(genpath('/projects/crunchie/kumar/kumar_working_directory/matlab/work/sk_codes/eeglab14_1_2b/functions'));
+removepath('/projects/crunchie/kumar/kumar_working_directory/matlab/work/sk_codes/eeglab14_1_2b/functions/octavefunc');
 % eeglab plugins
-addpath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b/plugins/');
-addpath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b/plugins/amica1.5/');
-addpath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b/plugins/clean_rawdata0.34/');
-addpath(genpath('/home/kumar/matlab/work/sk_codes/eeglab14_1_2b/plugins/tmullen-cleanline-696a7181b7d0/'));
+addpath('/projects/crunchie/kumar/kumar_working_directory/matlab/work/sk_codes/eeglab14_1_2b/plugins/');
+addpath('/projects/crunchie/kumar/kumar_working_directory/matlab/work/sk_codes/eeglab14_1_2b/plugins/amica1.5/');
+addpath('/projects/crunchie/kumar/kumar_working_directory/matlab/work/sk_codes/eeglab14_1_2b/plugins/clean_rawdata0.34/');
+addpath(genpath('/projects/crunchie/kumar/kumar_working_directory/matlab/work/sk_codes/eeglab14_1_2b/plugins/tmullen-cleanline-696a7181b7d0/'));
 % fieldtrip
-addpath('/home/kumar/matlab/work/sk_codes/fieldtrip-lite-20170706/fieldtrip-20170706/');
+addpath('/projects/crunchie/kumar/kumar_working_directory/matlab/work/sk_codes/fieldtrip-lite-20170706/fieldtrip-20170706/');
 ft_defaults;
 % SASICA toolbox
-addpath('/home/kumar/matlab/work/sk_codes/SASICA-master');
+addpath('/projects/crunchie/kumar/kumar_working_directory/matlab/work/sk_codes/SASICA-master');
 % sk (personal) utilities
-addpath('/home/kumar/matlab/work/sk_codes/sk_utilities');
+addpath('/projects/crunchie/kumar/kumar_working_directory/matlab/work/sk_codes/sk_utilities');
 % behavioral data folder (if needed)
-addpath('/home/kumar/matlab/work/sk_codes/EEG_data_analysis_01/behave_data');
+addpath('/projects/crunchie/kumar/kumar_working_directory/matlab/work/sk_codes/EEG_data_analysis_01/behave_data');
 % eeg data folder (if needed)
 clear;
 clc;
 
 %% basic required parameters
 tt.version = 'enemy'; % 'single', 'enemy', 'friend'
-tt.session = 1; % session number
-tt.sub_A = 30100; %
-tt.sub_B = 30300; %
+tt.session = 1;%2; % session number
+tt.sub_A = 30100;%30124; %
+tt.sub_B = 30300;%30324; %
 %
-wanted.save = 1;
+wanted.save = 0;
+wanted.photo_diode_trigger_adjustment = 1; % '1' for yes, '0' for no
 wanted.downsampling = 1; % '1' for yes, '0' for no
 wanted.fs_new = 256;%512; % new sampling frequency
 wanted.bridging_check = 1; % '1' for yes, '0' for no
@@ -85,6 +86,67 @@ try
     clear out ttsk
     fprintf('Data loaded.\n ');
     
+    %% tiggers timing adjustment according to the photo diodes
+    if wanted.photo_diode_trigger_adjustment
+        fprintf('Adjusting the data according to the delays of the screens ...\n');
+        % the diode_avg.default structure is important as it decides the
+        % triggers that are adjusted, please make sure the names are exactly as in the behaviour files in ttsk.trig structure
+        diode_avg.default.start_prediction = 28;
+        diode_avg.default.start_choice = 27;
+        diode_avg.default.start_evidence_other_player = 143;
+        diode_avg.default.start_evidence_own = 185;
+        % to get the trigger values
+        events_trigger = events(strcmp({events.type}, 'STATUS'));
+        byte.second = nan(1,size(events_trigger,2));
+        for loop_triggers = 1:size(events_trigger,2)
+            in_binary = dec2bin(events_trigger(loop_triggers).value,24)-'0';
+            binary_usb = in_binary(9:16);
+            byte.second(loop_triggers) = bin2dec(num2str(binary_usb));
+        end
+        % now here the avg of all the triggers
+        % find all the positions of 210,220,230,240 in byte.second
+        trig_cat = fieldnames(diode_avg.default);
+        for loop_trig_cat = 1:numel(fieldnames(diode_avg.default))
+            eval(string(strcat('trig_diode_location_def.',trig_cat(loop_trig_cat),' = find(byte.second==behave_data.A.ttsk.trig.',trig_cat(loop_trig_cat),') +1;')));
+            eval(string(strcat('trig_diode_location.',trig_cat(loop_trig_cat),' = trig_diode_location_def.',trig_cat(loop_trig_cat),'(byte.second(trig_diode_location_def.',trig_cat(loop_trig_cat),')== 0);')));
+            eval(string(strcat('trig_diode_location_def.',trig_cat(loop_trig_cat),' = trig_diode_location_def.',trig_cat(loop_trig_cat),'-1;')));
+            eval(string(strcat('diode_sum.',trig_cat(loop_trig_cat),' = 0;')));
+            eval(string(strcat('for loop_trig_diode_location = 1:length(trig_diode_location.',trig_cat(loop_trig_cat),');diode_sum.',trig_cat(loop_trig_cat),' = diode_sum.',trig_cat(loop_trig_cat)...
+                ,' + (events_trigger(trig_diode_location.',trig_cat(loop_trig_cat),'(loop_trig_diode_location)).sample - events_trigger(trig_diode_location.',trig_cat(loop_trig_cat)...
+                ,'(loop_trig_diode_location)-1).sample);end')));
+            eval(string(strcat('diode_avg.',trig_cat(loop_trig_cat),' = floor(diode_sum.',trig_cat(loop_trig_cat),'/length(trig_diode_location.',trig_cat(loop_trig_cat),'));')));
+        end
+        diode_avg.all = [];
+        for loop_trig_cat = 1:numel(fieldnames(diode_avg.default))
+            eval(string(strcat('diode_avg.all = [diode_avg.all,diode_avg.',trig_cat(loop_trig_cat),'];')));
+        end
+        % now change the sample values according to the avg delay
+        if ~isempty(find(diode_avg.all == min(diode_avg.all), 1))
+            for loop_trig_cat = 1:numel(fieldnames(diode_avg.default))
+                eval(string(strcat('for loop_trig_diode_location = 1: length(trig_diode_location_def.',trig_cat(loop_trig_cat),');events_trigger(trig_diode_location_def.',...
+                    trig_cat(loop_trig_cat),'(loop_trig_diode_location)).sample = events_trigger(trig_diode_location_def.',trig_cat(loop_trig_cat),'(loop_trig_diode_location)).sample',...
+                    ' + diode_avg.',trig_cat(loop_trig_cat),';end')));
+                eval(string(strcat('fprintf(''adjusted the delay of prediction screen by %d points\n'',diode_avg.',trig_cat(loop_trig_cat),');')));
+            end
+        else
+            % here implement the default delay (also to implement the default delay between two screens)
+            fprintf('no photo diode delay triggers found, therefore using the default averaged values.\n');
+            eval(string(strcat('for loop_trig_diode_location = 1: length(trig_diode_location_def.',trig_cat(loop_trig_cat),');events_trigger(trig_diode_location_def.',trig_cat(loop_trig_cat)...
+                ,'(loop_trig_diode_location)).sample = events_trigger(trig_diode_location_def.',trig_cat(loop_trig_cat),'(loop_trig_diode_location)).sample'...
+                ,' + diode_avg.default.',trig_cat(loop_trig_cat),';end')));
+        end
+        %
+        % Now important to put the event triggers back into the events for use
+        % by other sections of this code.
+        events(strcmp({events.type}, 'STATUS')) = events_trigger;
+        %
+        clear loop_trig_diode_location loop_triggers trig_diode_location_def trig_diode_location diode_sum diode_avg
+        clear diode_sum trig_diode_location
+        clear in_binary loop_try binary_lsb binary_usb binary_third
+        fprintf('Adjusting the data according to the delays of the screens ... Done.\n');
+    else
+        fprintf('Adjusting the data according to the delays of the screens not Done.\n ');
+    end
     
     %% downsampling
     % maybe use the anti-aliasing low pass filter before the downsampling process (yet to be imnplemented)
@@ -226,6 +288,7 @@ try
     else
         fprintf('Bridging check not done.\n');
     end
+    
     
     %% Filtering (highpass, then lowpass)
     % implementation of the line noise filter
@@ -670,10 +733,11 @@ try
     fprintf('\n');
     toc;
     diary('off');
-catch
+catch exception
     fprintf('\nlogging stopped because of error.\n');
     toc;
     diary('off');
+    rethrow(exception);
 end
 
 %%
