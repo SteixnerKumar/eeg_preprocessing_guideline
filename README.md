@@ -35,6 +35,8 @@ The EEG pre-processing code for the tiger task. It consists of the Hyper-scannin
 # EEG pre-processing protocol
 + Reading the data (EEG data and the Behavioral data).
 
++ Adjust the specified triggers automatically according to the photo diode trigger values.
+
 + Downsampling the data from 1024 to 512 Hz or any preference but has to be powers of 2 exponent (0<power<10). [optional step, can be turned on ('1') or off ('0')]
 
 + Cut the data between the most extreme points (recognized by the beginning and end trigger).
