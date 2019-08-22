@@ -40,9 +40,9 @@ clc;
 
 %% basic required parameters
 tt.version = 'enemy'; % 'single', 'enemy', 'friend'
-tt.session = 1;%2; % session number
-tt.sub_A = 30100;%30124; %
-tt.sub_B = 30300;%30324; %
+tt.session = 2;%2; % session number
+tt.sub_A = 30124;%30124; %
+tt.sub_B = 30324;%30324; %
 %
 wanted.save = 0;
 wanted.photo_diode_trigger_adjustment = 1; % '1' for yes, '0' for no
@@ -94,6 +94,7 @@ try
         diode_avg.default.start_prediction = 28;
         diode_avg.default.start_choice = 27;
         diode_avg.default.start_evidence_other_player = 143;
+        diode_avg.default.end_choice = 10;
         diode_avg.default.start_evidence_own = 185;
         % to get the trigger values
         events_trigger = events(strcmp({events.type}, 'STATUS'));
@@ -123,10 +124,10 @@ try
         % now change the sample values according to the avg delay
         if ~isempty(find(diode_avg.all == min(diode_avg.all), 1))
             for loop_trig_cat = 1:numel(fieldnames(diode_avg.default))
-                eval(string(strcat('for loop_trig_diode_location = 1: length(trig_diode_location_def.',trig_cat(loop_trig_cat),');events_trigger(trig_diode_location_def.',...
+                eval(string(strcat('if ~isnan(diode_avg.',trig_cat(loop_trig_cat),');for loop_trig_diode_location = 1: length(trig_diode_location_def.',trig_cat(loop_trig_cat),');events_trigger(trig_diode_location_def.',...
                     trig_cat(loop_trig_cat),'(loop_trig_diode_location)).sample = events_trigger(trig_diode_location_def.',trig_cat(loop_trig_cat),'(loop_trig_diode_location)).sample',...
-                    ' + diode_avg.',trig_cat(loop_trig_cat),';end')));
-                eval(string(strcat('fprintf(''adjusted the delay of prediction screen by %d points\n'',diode_avg.',trig_cat(loop_trig_cat),');')));
+                    ' + diode_avg.',trig_cat(loop_trig_cat),';end;','fprintf(''adjusted the delay of : %s screen by %d points\n'',string(trig_cat(loop_trig_cat)),diode_avg.',trig_cat(loop_trig_cat),');',...
+                    'else;fprintf(''did not adjust the delay of : %s screen as no trigger found\n'',string(trig_cat(loop_trig_cat)));end;')));
             end
         else
             % here implement the default delay (also to implement the default delay between two screens)
