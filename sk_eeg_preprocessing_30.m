@@ -40,9 +40,9 @@ clc;
 
 %% basic required parameters
 tt.version = 'enemy'; % 'single', 'enemy', 'friend'
-tt.session = 1;%2; % session number
-tt.sub_A = 30100;%30124; %
-tt.sub_B = 30300;%30324; %
+tt.session = 3;%2; % session number
+tt.sub_A = 30121;%30124; %
+tt.sub_B = 30321;%30324; %
 %
 wanted.save = 0;
 wanted.photo_diode_trigger_adjustment = 1; % '1' for yes, '0' for no
@@ -115,7 +115,7 @@ try
             eval(string(strcat('for loop_trig_diode_location = 1:length(trig_diode_location.',trig_cat(loop_trig_cat),');diode_sum.',trig_cat(loop_trig_cat),' = diode_sum.',trig_cat(loop_trig_cat)...
                 ,' + (events_trigger(trig_diode_location.',trig_cat(loop_trig_cat),'(loop_trig_diode_location)).sample - events_trigger(trig_diode_location.',trig_cat(loop_trig_cat)...
                 ,'(loop_trig_diode_location)-1).sample);end')));
-            eval(string(strcat('diode_avg.',trig_cat(loop_trig_cat),' = (diode_sum.',trig_cat(loop_trig_cat),'/length(trig_diode_location.',trig_cat(loop_trig_cat),'));')));
+            eval(string(strcat('diode_avg.',trig_cat(loop_trig_cat),' = floor(diode_sum.',trig_cat(loop_trig_cat),'/length(trig_diode_location.',trig_cat(loop_trig_cat),'));')));
         end
         % adjust the delay if trigger found
         for loop_trig_cat = 1:numel(fieldnames(diode_avg.default))
