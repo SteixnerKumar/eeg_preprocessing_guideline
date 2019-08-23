@@ -45,8 +45,6 @@ The EEG pre-processing code for the tiger task. It consists of the Hyper-scannin
 
 + Check for the bridging of the data for the individual participants and mark the channels. [optional step, can be turned on ('1') or off ('0')]
 
-+ Yet to include the automatic adjustment of the stimulus onset timings here based on the photo-diode triggers.
-
 + Filter the data. Using a line filter to get rid of the line noise at the EU standard 50Hz (can be changed to 60Hz if required). Then a the Butterworth bandpass FIR filter 4th order [1-90 Hz] and baseline correct it using the average of the session. [optional step, can be turned on ('1') or off ('0')]
 
 + Clean the data at this point. [optional step, can be turned on ('1') or off ('0')]
@@ -62,6 +60,8 @@ The EEG pre-processing code for the tiger task. It consists of the Hyper-scannin
   + Remove incompletely repaired segments from the data. (This function cuts segments from the data which contain high-power artifacts. Specifically, only windows are retained which have less than a certain fraction of "bad" channels, where a channel is bad in a window if its power is above or below a given upper/lower threshold (in standard deviations from a robust estimate of the EEG power distribution in the channel).)
 
 + Interpolate the missing channels that were rejected so far.  This is to minimize a potential bias towards a particular brain region or hemisphere.
+
++ Remove the extra EOG channels (before the re-referencing) .
 
 + Re-referencing the data to common average reference (CAR). [optional step, can be turned on ('1') or off ('0')]
 
