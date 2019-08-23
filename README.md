@@ -63,8 +63,6 @@ The EEG pre-processing code for the tiger task. It consists of the Hyper-scannin
 
 + Re-referencing the data to common average reference (CAR). [optional step, can be turned on ('1') or off ('0')]
 
-+ perform baseline correction.
-
 + remove the interpolated channels before the ICA is performed. This is done to avoid any rank deficiency that came with the inperpolation of the missing/rejected channels.
 
 + Independent component analysis (ICA) taking the entire session. The trials individually do not have enough data points to perform an ICA independently. There is an option to perform the ICA using the 'RUNICA' or the 'AMICA' algorithm; By default the 'AMICA' option is selected. [optional step, can be turned on ('1') or off ('0')]
