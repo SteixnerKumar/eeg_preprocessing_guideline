@@ -40,11 +40,11 @@ clc;
 
 %% basic required parameters
 tt.version = 'enemy'; % 'single', 'enemy', 'friend'
-tt.session = 3;%2; % session number
-tt.sub_A = 30121;%30124; %
-tt.sub_B = 30321;%30324; %
+tt.session = 1;%2; % session number
+tt.sub_A = 30101;%30124; %
+tt.sub_B = 30301;%30324; %
 %
-wanted.save = 0;
+wanted.save = 1;
 wanted.photo_diode_trigger_adjustment = 1; % '1' for yes, '0' for no
 wanted.downsampling = 1; % '1' for yes, '0' for no
 wanted.fs_new = 256;%512; % new sampling frequency
@@ -568,13 +568,13 @@ try
         A.ica.trials = 1;
         A.ica.times = 1:size(A.ica.data,2);
         A.ica.srate = hdr.A.Fs;
-        A.ica.icachansind = 1:size(A.ica.icaweights,1);
+        A.ica.icachansind = 1:size(A.ica.data,1);
         B.ica.data = data.Bf_cut_asr_repaired_interp_car_cut;
         B.ica.nbchan = size(B.ica.icaweights,1);
         B.ica.trials = 1;
         B.ica.times = 1:size(B.ica.data,2);
         B.ica.srate = hdr.B.Fs;
-        B.ica.icachansind = 1:size(B.ica.icaweights,1);
+        B.ica.icachansind = 1:size(B.ica.data,1);
         %
         temp_channels_to_remove = A.channels_to_remove(~A.channels_eog);
         A.ica.chanlocs = elec(4:end);A.ica.chanlocs = elec(~temp_channels_to_remove);
