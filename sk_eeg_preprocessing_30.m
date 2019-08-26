@@ -132,7 +132,7 @@ try
         % by other sections of this code.
         events(strcmp({events.type}, 'STATUS')) = events_trigger;
         %
-        clear loop_trig_diode_location loop_triggers trig_diode_location_def trig_diode_location diode_sum diode_avg
+        clear loop_trig_diode_location loop_triggers trig_diode_location_def trig_diode_location diode_sum
         clear diode_sum trig_diode_location
         clear in_binary loop_try binary_lsb binary_usb binary_third
         fprintf('Adjusting the data according to the delays of the screens ... Done.\n');
@@ -662,7 +662,7 @@ try
             for loop_status = 1:length(temp_loc)
                 events_A(temp_loc(loop_status)).sample = events(temp_loc(loop_status)).sample + default_screen_delay; % check the plus or the minus
             end
-            clear loop_status default_screen_delay temp_loc
+            clear loop_status temp_loc
         end
         %
         % for participant A
@@ -723,6 +723,10 @@ try
         temp_save_B.elec = elec;
         temp_save_A.bad_chans = bad_chans_A;
         temp_save_B.bad_chans = bad_chans_B;
+        temp_save_A.photo_diode_delay = diode_avg.default;
+        temp_save_A.photo_diode_delay = default_screen_delay;
+        temp_save_B.photo_diode_delay = diode_avg.default;
+        temp_save_B.photo_diode_delay = default_screen_delay;
         temp_save_A.name = strcat('tt_preprocessed_',strcat('_',datestr(now,'YYYYmmDD'),'_',datestr(now,'HHMMSS'),'_'),...
             tt.version,'_session_',num2str(tt.session),'_vp',num2str(tt.sub_A),'.mat');
         temp_save_B.name = strcat('tt_preprocessed_',strcat('_',datestr(now,'YYYYmmDD'),'_',datestr(now,'HHMMSS'),'_'),...
