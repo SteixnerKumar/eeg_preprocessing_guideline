@@ -652,10 +652,23 @@ try
     
     %% cut the data here into trials/epochs
     if wanted.trials && wanted.ica
+        % the delay between the screens
+        events_A = events;
+        events_B = events;
+        if wanted.photo_diode_trigger_adjustment
+            default_screen_delay = 31; % check this value
+            default_screen_delay = floor(default_screen_delay/(hdr.both.Fs/wanted.fs_new)); % depending upon the downsampling
+            temp_loc = find(strcmp({events.type}, 'STATUS'));
+            for loop_status = 1:length(temp_loc)
+                events_A(temp_loc(loop_status)).sample = events(temp_loc(loop_status)).sample + default_screen_delay; % check the plus or the minus
+            end
+            clear loop_status default_screen_delay temp_loc
+        end
+        %
         % for participant A
         sktt = [];
         sktt.Fs = hdr.both.Fs;
-        sktt.events = events;
+        sktt.events = events_A;
         sktt.data = A.ica_clean.data;
         sktt.flag_bc_trial = 1;
         sktt.trig = behave_data.A.ttsk.trig;
@@ -666,7 +679,7 @@ try
         % for participant B
         sktt = [];
         sktt.Fs = hdr.both.Fs;
-        sktt.events = events;
+        sktt.events = events_A;
         sktt.data = B.ica_clean.data;
         sktt.flag_bc_trial = 1;
         % temporarily interchange the A and B trigger numbers for cutting the
@@ -700,8 +713,8 @@ try
         temp_save_B.original = data.B;
         temp_save_A.hdr = hdr.A;
         temp_save_B.hdr = hdr.B;
-        temp_save_A.events = events;
-        temp_save_B.events = events;
+        temp_save_A.events = events_A;
+        temp_save_B.events = events_B;
         temp_save_A.settings = wanted;
         temp_save_B.settings = wanted;
         temp_save_A.behaviour = behave_data.A;
