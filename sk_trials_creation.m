@@ -4,7 +4,7 @@ function [data, trial] = sk_trials_creation(sktt)
 % To cut the data into trials/epochs
 % (the structure will be channals X trial-length X trial-number)
 % ***************************************************************
-%
+% YET to IMPLEMENT THE FORCED LISTEN prediction and choice trial correction
 % Usage:
 % function [data, trial] = sk_trials_creation(sktt)
 %
@@ -92,15 +92,103 @@ trial.response_prediction_A = [sktt.trig.start_prediction sktt.trig.response_pre
 trial.response_choice_A = [sktt.trig.start_choice sktt.trig.response_choice_A];
 trial.response_prediction_B = [sktt.trig.start_prediction sktt.trig.response_prediction_B];
 trial.response_choice_B = [sktt.trig.start_choice sktt.trig.response_choice_B];
+trial.num_response_prediction_A = length(find(byte.second == sktt.trig.response_prediction_A));
+trial.num_response_prediction_B = length(find(byte.second == sktt.trig.response_prediction_B));
+trial.num_response_choice_A = length(find(byte.second == sktt.trig.response_choice_A));
+trial.num_response_choice_B = length(find(byte.second == sktt.trig.response_choice_B));
 % get the points in the data
 trial.points.prediction = [[sktt.events_trigger(byte.second == trial.prediction(1)).sample];[sktt.events_trigger(byte.second == trial.prediction(2)).sample]]';
 trial.points.choice = [[sktt.events_trigger(byte.second == trial.choice(1)).sample];[sktt.events_trigger(byte.second == trial.choice(2)).sample]]';
 trial.points.evidence_other = [[sktt.events_trigger(byte.second == trial.evidence_other(1)).sample];[sktt.events_trigger(byte.second == trial.evidence_other(2)).sample]]';
 trial.points.evidence_own = [[sktt.events_trigger(byte.second == trial.evidence_own(1)).sample];[sktt.events_trigger(byte.second == trial.evidence_own(2)).sample]]';
-trial.points.response_prediction_A = [[sktt.events_trigger(byte.second == trial.response_prediction_A(1)).sample];[sktt.events_trigger(byte.second == trial.response_prediction_A(2)).sample]]';
-trial.points.response_choice_A = [[sktt.events_trigger(byte.second == trial.response_choice_A(1)).sample];[sktt.events_trigger(byte.second == trial.response_choice_A(2)).sample]]';
-trial.points.response_prediction_B = [[sktt.events_trigger(byte.second == trial.response_prediction_B(1)).sample];[sktt.events_trigger(byte.second == trial.response_prediction_B(2)).sample]]';
-trial.points.response_choice_B = [[sktt.events_trigger(byte.second == trial.response_choice_B(1)).sample];[sktt.events_trigger(byte.second == trial.response_choice_B(2)).sample]]';
+if length(find(byte.second == trial.response_prediction_A(2))) ~= length(find(byte.second == trial.response_prediction_A(1))) % forced predictions
+    temp_one = find(byte.second == trial.response_prediction_A(1));
+    temp_two = find(byte.second == trial.response_prediction_A(2));
+    count_three = 1;
+    temp_three =nan(1,length(temp_two));
+    for loop_one_two_outer = 1:length(temp_two)
+        temp_temp = nan(1,length(temp_one));
+        for loop_one_two = 1:length(temp_one)
+            temp_temp(loop_one_two) = abs(temp_one(loop_one_two) -  temp_two(loop_one_two_outer));
+        end
+        temp_temp_loc = temp_temp == min(temp_temp);
+        temp_three(count_three) = temp_one(temp_temp_loc);temp_two(loop_one_two_outer);
+        count_three = count_three +1 ;
+    end
+    clear count_three loop_one_two_outer loop_one_two temp_temp temp_temp_loc temp_one
+    temp_one = zeros(1,length(byte.second));
+    temp_one(temp_three) = 1;
+    trial.points.response_prediction_A = [[sktt.events_trigger(logical(temp_one)).sample];[sktt.events_trigger(byte.second == trial.response_prediction_A(2)).sample]]';
+    clear temp_one temp_two temp_three
+else
+    trial.points.response_prediction_A = [[sktt.events_trigger(byte.second == trial.response_prediction_A(1)).sample];[sktt.events_trigger(byte.second == trial.response_prediction_A(2)).sample]]';
+end
+if length(find(byte.second == trial.response_choice_A(2))) ~= length(find(byte.second == trial.response_choice_A(1))) % forced listens
+    temp_one = find(byte.second == trial.response_choice_A(1));
+    temp_two = find(byte.second == trial.response_choice_A(2));
+    count_three = 1;
+    temp_three =nan(1,length(temp_two));
+    for loop_one_two_outer = 1:length(temp_two)
+        temp_temp = nan(1,length(temp_one));
+        for loop_one_two = 1:length(temp_one)
+            temp_temp(loop_one_two) = abs(temp_one(loop_one_two) -  temp_two(loop_one_two_outer));
+        end
+        temp_temp_loc = temp_temp == min(temp_temp);
+        temp_three(count_three) = temp_one(temp_temp_loc);temp_two(loop_one_two_outer);
+        count_three = count_three +1 ;
+    end
+    clear count_three loop_one_two_outer loop_one_two temp_temp temp_temp_loc temp_one
+    temp_one = zeros(1,length(byte.second));
+    temp_one(temp_three) = 1;
+    trial.points.response_choice_A = [[sktt.events_trigger(logical(temp_one)).sample];[sktt.events_trigger(byte.second == trial.response_choice_A(2)).sample]]';
+    clear temp_one temp_two temp_three
+else
+    trial.points.response_choice_A = [[sktt.events_trigger(byte.second == trial.response_choice_A(1)).sample];[sktt.events_trigger(byte.second == trial.response_choice_A(2)).sample]]';
+end
+if length(find(byte.second == trial.response_prediction_B(2))) ~= length(find(byte.second == trial.response_prediction_B(1))) % forced predictions
+    temp_one = find(byte.second == trial.response_prediction_B(1));
+    temp_two = find(byte.second == trial.response_prediction_B(2));
+    count_three = 1;
+    temp_three =nan(1,length(temp_two));
+    for loop_one_two_outer = 1:length(temp_two)
+        temp_temp = nan(1,length(temp_one));
+        for loop_one_two = 1:length(temp_one)
+            temp_temp(loop_one_two) = abs(temp_one(loop_one_two) -  temp_two(loop_one_two_outer));
+        end
+        temp_temp_loc = temp_temp == min(temp_temp);
+        temp_three(count_three) = temp_one(temp_temp_loc);temp_two(loop_one_two_outer);
+        count_three = count_three +1 ;
+    end
+    clear count_three loop_one_two_outer loop_one_two temp_temp temp_temp_loc temp_one
+    temp_one = zeros(1,length(byte.second));
+    temp_one(temp_three) = 1;
+    trial.points.response_prediction_B = [[sktt.events_trigger(logical(temp_one)).sample];[sktt.events_trigger(byte.second == trial.response_prediction_B(2)).sample]]';
+    clear temp_one temp_two temp_three
+else
+    trial.points.response_prediction_B = [[sktt.events_trigger(byte.second == trial.response_prediction_B(1)).sample];[sktt.events_trigger(byte.second == trial.response_prediction_B(2)).sample]]';
+end
+if length(find(byte.second == trial.response_choice_B(2))) ~= length(find(byte.second == trial.response_choice_B(1))) % forced listens
+    temp_one = find(byte.second == trial.response_choice_B(1));
+    temp_two = find(byte.second == trial.response_choice_B(2));
+    count_three = 1;
+    temp_three =nan(1,length(temp_two));
+    for loop_one_two_outer = 1:length(temp_two)
+        temp_temp = nan(1,length(temp_one));
+        for loop_one_two = 1:length(temp_one)
+            temp_temp(loop_one_two) = abs(temp_one(loop_one_two) -  temp_two(loop_one_two_outer));
+        end
+        temp_temp_loc = temp_temp == min(temp_temp);
+        temp_three(count_three) = temp_one(temp_temp_loc);temp_two(loop_one_two_outer);
+        count_three = count_three +1 ;
+    end
+    clear count_three loop_one_two_outer loop_one_two temp_temp temp_temp_loc temp_one
+    temp_one = zeros(1,length(byte.second));
+    temp_one(temp_three) = 1;
+    trial.points.response_choice_B = [[sktt.events_trigger(logical(temp_one)).sample];[sktt.events_trigger(byte.second == trial.response_choice_B(2)).sample]]';
+    clear temp_one temp_two temp_three
+else
+    trial.points.response_choice_B = [[sktt.events_trigger(byte.second == trial.response_choice_B(1)).sample];[sktt.events_trigger(byte.second == trial.response_choice_B(2)).sample]]';
+end
 % cutting the data
 % rowsXcolumnXtrials
 data.trials.prediction.data = nan(size(sktt.data,1),max(trial.points.prediction(:,2)-trial.points.prediction(:,1))+1,trial.num);
@@ -121,15 +209,24 @@ for loop_trials = 1:trial.num
         sktt.data(:,trial.points.evidence_other(loop_trials,1):trial.points.evidence_other(loop_trials,2));
     data.trials.evidence_own.data(:,1:(trial.points.evidence_own(loop_trials,2) - trial.points.evidence_own(loop_trials,1)+1),loop_trials) = ...
         sktt.data(:,trial.points.evidence_own(loop_trials,1):trial.points.evidence_own(loop_trials,2));
-    data.trials.response_prediction_A.data(:,1:(trial.points.response_prediction_A(loop_trials,2) - trial.points.response_prediction_A(loop_trials,1)+1),loop_trials) = ...
-        sktt.data(:,trial.points.response_prediction_A(loop_trials,1):trial.points.response_prediction_A(loop_trials,2));
-    data.trials.response_choice_A.data(:,1:(trial.points.response_choice_A(loop_trials,2) - trial.points.response_choice_A(loop_trials,1)+1),loop_trials) = ...
-        sktt.data(:,trial.points.response_choice_A(loop_trials,1):trial.points.response_choice_A(loop_trials,2));
-    data.trials.response_prediction_B.data(:,1:(trial.points.response_prediction_B(loop_trials,2) - trial.points.response_prediction_B(loop_trials,1)+1),loop_trials) = ...
-        sktt.data(:,trial.points.response_prediction_B(loop_trials,1):trial.points.response_prediction_B(loop_trials,2));
-    data.trials.response_choice_B.data(:,1:(trial.points.response_choice_B(loop_trials,2) - trial.points.response_choice_B(loop_trials,1)+1),loop_trials) = ...
-        sktt.data(:,trial.points.response_choice_B(loop_trials,1):trial.points.response_choice_B(loop_trials,2));
 end
+for loop_trials_other = 1:trial.num_response_prediction_A
+    data.trials.response_prediction_A.data(:,1:(trial.points.response_prediction_A(loop_trials_other,2) - trial.points.response_prediction_A(loop_trials_other,1)+1),loop_trials_other) = ...
+        sktt.data(:,trial.points.response_prediction_A(loop_trials_other,1):trial.points.response_prediction_A(loop_trials_other,2));
+end
+for loop_trials_other = 1:trial.num_response_prediction_B
+    data.trials.response_prediction_B.data(:,1:(trial.points.response_prediction_B(loop_trials_other,2) - trial.points.response_prediction_B(loop_trials_other,1)+1),loop_trials_other) = ...
+        sktt.data(:,trial.points.response_prediction_B(loop_trials_other,1):trial.points.response_prediction_B(loop_trials_other,2));
+end
+for loop_trials_other = 1:trial.num_response_choice_A
+    data.trials.response_choice_A.data(:,1:(trial.points.response_choice_A(loop_trials_other,2) - trial.points.response_choice_A(loop_trials_other,1)+1),loop_trials_other) = ...
+        sktt.data(:,trial.points.response_choice_A(loop_trials_other,1):trial.points.response_choice_A(loop_trials_other,2));
+end
+for loop_trials_other = 1:trial.num_response_choice_B
+    data.trials.response_choice_B.data(:,1:(trial.points.response_choice_B(loop_trials_other,2) - trial.points.response_choice_B(loop_trials_other,1)+1),loop_trials_other) = ...
+        sktt.data(:,trial.points.response_choice_B(loop_trials_other,1):trial.points.response_choice_B(loop_trials_other,2));
+end
+%
 % cutting the edges for equal trial lengths
 data.trials.prediction.data = data.trials.prediction.data(:,1:min(trial.points.prediction(:,2)-trial.points.prediction(:,1))+1,:);
 data.trials.choice.data = data.trials.choice.data(:,1:min(trial.points.choice(:,2)-trial.points.choice(:,1))+1,:);
@@ -168,10 +265,18 @@ if sktt.flag_bc_trial
         trial.points.bc.mean.choice(:,loop_trials) = mean(sktt.data(:,trial.points.bc.choice(loop_trials,1):trial.points.bc.choice(loop_trials,2)),2);
         trial.points.bc.mean.evidence_other(:,loop_trials) = mean(sktt.data(:,trial.points.bc.evidence_other(loop_trials,1):trial.points.bc.evidence_other(loop_trials,2)),2);
         trial.points.bc.mean.evidence_own(:,loop_trials) = mean(sktt.data(:,trial.points.bc.evidence_own(loop_trials,1):trial.points.bc.evidence_own(loop_trials,2)),2);
-        trial.points.bc.mean.response_prediction_A(:,loop_trials) = mean(sktt.data(:,trial.points.bc.response_prediction_A(loop_trials,1):trial.points.bc.response_prediction_A(loop_trials,2)),2);
-        trial.points.bc.mean.response_choice_A(:,loop_trials) = mean(sktt.data(:,trial.points.bc.response_choice_A(loop_trials,1):trial.points.bc.response_choice_A(loop_trials,2)),2);
-        trial.points.bc.mean.response_prediction_B(:,loop_trials) = mean(sktt.data(:,trial.points.bc.response_prediction_B(loop_trials,1):trial.points.bc.response_prediction_B(loop_trials,2)),2);
-        trial.points.bc.mean.response_choice_B(:,loop_trials) = mean(sktt.data(:,trial.points.bc.response_choice_B(loop_trials,1):trial.points.bc.response_choice_B(loop_trials,2)),2);
+    end
+    for loop_trials_other = 1:trial.num_response_prediction_A
+        trial.points.bc.mean.response_prediction_A(:,loop_trials_other) = mean(sktt.data(:,trial.points.bc.response_prediction_A(loop_trials_other,1):trial.points.bc.response_prediction_A(loop_trials_other,2)),2);
+    end
+    for loop_trials_other = 1:trial.num_response_prediction_B
+        trial.points.bc.mean.response_prediction_B(:,loop_trials_other) = mean(sktt.data(:,trial.points.bc.response_prediction_B(loop_trials_other,1):trial.points.bc.response_prediction_B(loop_trials_other,2)),2);
+    end
+    for loop_trials_other = 1:trial.num_response_choice_A
+        trial.points.bc.mean.response_choice_A(:,loop_trials_other) = mean(sktt.data(:,trial.points.bc.response_choice_A(loop_trials_other,1):trial.points.bc.response_choice_A(loop_trials_other,2)),2);
+    end
+    for loop_trials_other = 1:trial.num_response_choice_B
+        trial.points.bc.mean.response_choice_B(:,loop_trials_other) = mean(sktt.data(:,trial.points.bc.response_choice_B(loop_trials_other,1):trial.points.bc.response_choice_B(loop_trials_other,2)),2);
     end
     % substracting the mean from the data
     for loop_trials = 1:trial.num
@@ -179,10 +284,18 @@ if sktt.flag_bc_trial
         data.trials.choice.data(:,:,loop_trials) = data.trials.choice.data(:,:,loop_trials) - repmat(trial.points.bc.mean.choice(:,loop_trials),1,size(data.trials.choice.data,2));
         data.trials.evidence_other.data(:,:,loop_trials) = data.trials.evidence_other.data(:,:,loop_trials) - repmat(trial.points.bc.mean.evidence_other(:,loop_trials),1,size(data.trials.evidence_other.data,2));
         data.trials.evidence_own.data(:,:,loop_trials) = data.trials.evidence_own.data(:,:,loop_trials) - repmat(trial.points.bc.mean.evidence_own(:,loop_trials),1,size(data.trials.evidence_own.data,2));
-        data.trials.response_prediction_A.data(:,:,loop_trials) = data.trials.response_prediction_A.data(:,:,loop_trials) - repmat(trial.points.bc.mean.response_prediction_A(:,loop_trials),1,size(data.trials.response_prediction_A.data,2));
-        data.trials.response_choice_A.data(:,:,loop_trials) = data.trials.response_choice_A.data(:,:,loop_trials) - repmat(trial.points.bc.mean.response_choice_A(:,loop_trials),1,size(data.trials.response_choice_A.data,2));
-        data.trials.response_prediction_B.data(:,:,loop_trials) = data.trials.response_prediction_B.data(:,:,loop_trials) - repmat(trial.points.bc.mean.response_prediction_B(:,loop_trials),1,size(data.trials.response_prediction_B.data,2));
-        data.trials.response_choice_B.data(:,:,loop_trials) = data.trials.response_choice_B.data(:,:,loop_trials) - repmat(trial.points.bc.mean.response_choice_B(:,loop_trials),1,size(data.trials.response_choice_B.data,2));
+    end
+    for loop_trials_other = 1:trial.num_response_prediction_A
+        data.trials.response_prediction_A.data(:,:,loop_trials_other) = data.trials.response_prediction_A.data(:,:,loop_trials_other) - repmat(trial.points.bc.mean.response_prediction_A(:,loop_trials_other),1,size(data.trials.response_prediction_A.data,2));
+    end
+    for loop_trials_other = 1:trial.num_response_prediction_B
+        data.trials.response_prediction_B.data(:,:,loop_trials_other) = data.trials.response_prediction_B.data(:,:,loop_trials_other) - repmat(trial.points.bc.mean.response_prediction_B(:,loop_trials_other),1,size(data.trials.response_prediction_B.data,2));
+    end
+    for loop_trials_other = 1:trial.num_response_choice_A
+        data.trials.response_choice_A.data(:,:,loop_trials_other) = data.trials.response_choice_A.data(:,:,loop_trials_other) - repmat(trial.points.bc.mean.response_choice_A(:,loop_trials_other),1,size(data.trials.response_choice_A.data,2));
+    end
+    for loop_trials_other = 1:trial.num_response_choice_B
+        data.trials.response_choice_B.data(:,:,loop_trials_other) = data.trials.response_choice_B.data(:,:,loop_trials_other) - repmat(trial.points.bc.mean.response_choice_B(:,loop_trials_other),1,size(data.trials.response_choice_B.data,2));
     end
     fprintf('Baseline correction of the epochs/trials ... Done.\n');
 end
