@@ -35,6 +35,9 @@ Note: This code is not optimized and not completely checked for errors, therefor
 ###### [Back to Contents](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#Contents)
 
 # EEG pre-processing protocol
+
+Main file: 'sk_eeg_preprocessing_30.m'
+
 + Reading the data (EEG data and the Behavioral data).
 
 + Adjust the specified triggers automatically according to the photodiode trigger values.
