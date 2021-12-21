@@ -35,13 +35,13 @@ The EEG pre-processing code for the tiger task. It consists of the Hyper-scannin
 # EEG pre-processing protocol
 + Reading the data (EEG data and the Behavioral data).
 
-+ Adjust the specified triggers automatically according to the photo diode trigger values.
++ Adjust the specified triggers automatically according to the photodiode trigger values.
 
-+ Downsampling the data from 1024 to 512 Hz or any preference but has to be powers of 2 exponent (0<power<10). [optional step, can be turned on ('1') or off ('0')]
++ Downsampling the data from 1024 to 512 Hz or any preference but has to be powers of 2 exponents (0<power<10). [optional step, can be turned on ('1') or off ('0')]
 
 + Cut the data between the most extreme points (recognized by the beginning and end trigger).
 
-+ Cut the data into the 2 participants, so we work on these two different datasets seperately.
++ Cut the data into the 2 participants, so we work on these two different datasets separately.
 
 + Check for the bridging of the data for the individual participants and mark the channels. [optional step, can be turned on ('1') or off ('0')]
 
@@ -49,33 +49,33 @@ The EEG pre-processing code for the tiger task. It consists of the Hyper-scannin
 
 + Clean the data at this point. [optional step, can be turned on ('1') or off ('0')]
 
-  + Check for flatlines and mark them up. (This is an automated artifact rejection function which ensures that the data contains no flat-lined channels. If it is found then the channel is marked.)
+  + Check for flatlines and mark them up. (This is an automated artifact rejection function that ensures that the data contains no flat-lined channels. If it is found then the channel is marked.)
 
-  + Check for noisy channels and mark them up. (This is an automated artifact rejection function which ensures that the data contains no channels that record only noise for extended periods of time. If channels with control signals are contained in the data these are usually also removed. The criterion is based on correlation: if a channel is decorrelated from all others (pairwise correlation < a given threshold), excluding a given fraction of most correlated channels -- and if this holds on for a sufficiently long fraction of the data set -- then the channel is marked.)
+  + Check for noisy channels and mark them up. (This is an automated artifact rejection function that ensures that the data contains no channels that record only noise for an extended period of time. If channels with control signals are contained in the data these are usually also removed. The criterion is based on correlation: if a channel is decorrelated from all others (pairwise correlation < a given threshold), excluding a given fraction of most correlated channels -- and if this holds on for a sufficiently long fraction of the data set -- then the channel is marked.)
 
   + Reject the bad channels marked so far.
 
-  + Implementation of the artifact subspace reconstruction for short-time burst algorithm (ASR). (This is an automated artifact rejection function that ensures that the data contains no events that have abnormally strong power; the subspaces on which those events occur are reconstructed (interpolated) based on the rest of the EEG signal during these time periods. The basic principle is to first find a section of data that represents clean "reference" EEG and to compute statistics on there. Then, the function goes over the whole data in a sliding window and finds the subspaces in which there is activity that is more than a few standard deviations away from the reference EEG (this threshold is a tunable parameter). Once the function has found the bad subspaces it will treat them as missing data and reconstruct their content using a mixing matrix that was calculated on the clean data.)
+  + Implementation of the artifact subspace reconstruction for short-time burst algorithm (ASR). (This is an automated artifact rejection function that ensures that the data contains no events that have abnormally strong power; the subspaces on which those events occur are reconstructed (interpolated) based on the rest of the EEG signal during these time periods. The basic principle is to first find a section of data that represents clean "reference" EEG and to compute statistics on there. Then, the function goes over the whole data in a sliding window and finds the subspaces in which there is an activity that is more than a few standard deviations away from the reference EEG (this threshold is a tunable parameter). Once the function has found the bad subspaces it will treat them as missing data and reconstruct their content using a mixing matrix that was calculated on the clean data.)
 
   + Remove incompletely repaired segments from the data. (This function cuts segments from the data which contain high-power artifacts. Specifically, only windows are retained which have less than a certain fraction of "bad" channels, where a channel is bad in a window if its power is above or below a given upper/lower threshold (in standard deviations from a robust estimate of the EEG power distribution in the channel).)
 
-+ Interpolate the missing channels that were rejected so far.  This is to minimize a potential bias towards a particular brain region or hemisphere. Also here remove the extra EOG channels (before the re-referencing) .
++ Interpolate the missing channels that were rejected so far. This is to minimize a potential bias towards a particular brain region or hemisphere. Also here remove the extra EOG channels (before the re-referencing).
 
 + Re-referencing the data to common average reference (CAR). [optional step, can be turned on ('1') or off ('0')]
 
-+ remove the interpolated channels before the ICA is performed. This is done to avoid any rank deficiency that came with the inperpolation of the missing/rejected channels.
++ Remove the interpolated channels before the ICA is performed. This is done to avoid any rank deficiency that came with the interpolation of the missing/rejected channels.
 
-+ Independent component analysis (ICA) taking the entire session. The trials individually do not have enough data points to perform an ICA independently. There is an option to perform the ICA using the 'RUNICA' or the 'AMICA' algorithm; By default the 'AMICA' option is selected. [optional step, can be turned on ('1') or off ('0')]
++ Independent component analysis (ICA) takes the entire session. The trials individually do not have enough data points to perform an ICA independently. There is an option to perform the ICA using the 'RUNICA' or the 'AMICA' algorithm; By default, the 'AMICA' option is selected. [optional step, can be turned on ('1') or off ('0')]
 
 + Automatic detection of the artifacts in the component space using the Guided Selection of ICA components for Artifact rejection (SASICA) algorithm.
 
-+ Cut the data into the trials  (prediction, choice, etc...). (optional mean baseline correction possibility) [optional step, can be turned on ('1') or off ('0')]
++ Cut the data into the trials (prediction, choice, etc...). (optional mean baseline correction possibility) [optional step, can be turned on ('1') or off ('0')]
 
-+ save the data for each participant until this step. [optional step, can be turned on ('1') or off ('0')]
++ Save the data for each participant until this step. [optional step, can be turned on ('1') or off ('0')]
 
-+ Option here is to work in the component space here / or / convert back using the inverse ICAweights to the sensor space.
++ From here on one can work in the component space / or / convert back using the inverse ICA weights to the sensor space.
 
-+ Further statistics and analysis to be implemented from here on.
++ Further statistics and analysis are to be implemented from here on.
 ###### [Back to Contents](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#Contents)
 
-***author: Saurabh Kumar*** 
+***author: Saurabh Steixner-Kumar*** 
