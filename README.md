@@ -4,8 +4,10 @@
 ## [EEG pre-processing protocol](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#eeg-pre-processing-protocol-1)
 
 # tiger_eeg_preprocessing
-The general idea of why this code was created.
-The EEG pre-processing code for the tiger task. It consists of the Hyper-scanning EEG data that needs to be preprocessed.
+Please consider this repository as a guideline for EEG pre-processing steps. This is created for the hyper-scanning data from the tiger task.
+
+Note: This code is not optimized and not completely checked for errors, therefore please use it with caution and only as a guideline.
+
 ###### [Back to Contents](https://github.com/saurabhsay/tiger_eeg_preprocessing/blob/master/README.md#Contents)
 
 # The default versions used for this codebase
